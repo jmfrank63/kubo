@@ -28,7 +28,7 @@ handled for you by writes to the request body blocking.)
 ## API Transports
 
 Like with everything else, IPFS aims to be flexible regarding the API transports.
-Currently, the [kubo](https://github.com/ipfs/kubo) implementation supports
+Currently, the [kubo](https://github.com/jmfrank63/kubo) implementation supports
 both an in-process API and an HTTP API. More can be added easily, by mapping the
 API functions over a transport. (This is similar to how gRPC is also _mapped on
 top of transports_, like HTTP).

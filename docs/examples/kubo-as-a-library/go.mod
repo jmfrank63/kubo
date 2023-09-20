@@ -4,11 +4,11 @@ go 1.20
 
 // Used to keep this in sync with the current version of kubo. You should remove
 // this if you copy this example.
-replace github.com/ipfs/kubo => ./../../..
+replace github.com/jmfrank63/kubo => ./../../..
 
 require (
 	github.com/ipfs/boxo v0.12.1-0.20230825151903-13569468babd
-	github.com/ipfs/kubo v0.0.0-00010101000000-000000000000
+	github.com/jmfrank63/kubo v0.0.0-00010101000000-000000000000
 	github.com/libp2p/go-libp2p v0.30.0
 	github.com/multiformats/go-multiaddr v0.11.0
 )

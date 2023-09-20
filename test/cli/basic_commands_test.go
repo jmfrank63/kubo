@@ -62,7 +62,7 @@ func TestIPFSVersionDeps(t *testing.T) {
 	res = strings.TrimSpace(res)
 	lines := SplitLines(res)
 
-	assert.Equal(t, "github.com/ipfs/kubo@(devel)", lines[0])
+	assert.Equal(t, "github.com/jmfrank63/kubo@(devel)", lines[0])
 
 	for _, depLine := range lines[1:] {
 		split := strings.Split(depLine, " => ")

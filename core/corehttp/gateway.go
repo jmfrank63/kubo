@@ -17,7 +17,7 @@ import (
 	"github.com/ipfs/boxo/namesys"
 	offlineroute "github.com/ipfs/boxo/routing/offline"
 	"github.com/ipfs/go-cid"
-	version "github.com/ipfs/kubo"
+	version "github.com/jmfrank63/kubo"
 	"github.com/jmfrank63/kubo/config"
 	"github.com/jmfrank63/kubo/core"
 	"github.com/jmfrank63/kubo/core/node"

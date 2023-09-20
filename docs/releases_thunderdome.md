@@ -14,7 +14,7 @@ For background information about how Thunderdome works, see: https://github.com/
 * Configure the AWS CLI
   * Configure the credentials as described in the [Thunderdome documentation](https://github.com/ipfs-shipyard/thunderdome/blob/main/cmd/thunderdome/README.md#credentials), using the credentials from 1Password
 * Make sure the `thunderdome` binary is up-to-date: `go build ./cmd/thunderdome`
-  
+
 ## Add & run an experiment
 
 Create a new release configuration JSON in the `experiments/` directory, based on the most recent `kubo-release` configuration, and tweak as necessary. Generally we setup the targets to run a commit against the tag of the last release, such as:
@@ -25,7 +25,7 @@ Create a new release configuration JSON in the `experiments/` directory, based o
 			"name": "kubo190-4283b9",
 			"description": "kubo 0.19.0-rc1",
 			"build_from_git": {
-				"repo": "https://github.com/ipfs/kubo.git",
+				"repo": "https://github.com/jmfrank63/kubo.git",
 				"commit":"4283b9d98f8438fc8751ccc840d8fc24eeae6f13"
 			}
 		},
@@ -33,13 +33,13 @@ Create a new release configuration JSON in the `experiments/` directory, based o
 			"name": "kubo181",
 			"description": "kubo 0.18.",
 			"build_from_git": {
-				"repo": "https://github.com/ipfs/kubo.git",
+				"repo": "https://github.com/jmfrank63/kubo.git",
 				"tag":"v0.18.1"
 			}
 		}
 	]
 ```
-  
+
 Run the experiment (where `$EXPERIMENT_CONFIG_JSON` is a path to the config JSON created above):
 
 ```shell

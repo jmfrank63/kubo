@@ -5,7 +5,7 @@ import (
 	"sort"
 	"time"
 
-	version "github.com/ipfs/kubo"
+	version "github.com/jmfrank63/kubo"
 	config "github.com/jmfrank63/kubo/config"
 
 	logging "github.com/ipfs/go-log"

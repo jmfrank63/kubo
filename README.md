@@ -8,7 +8,7 @@ Kubo: IPFS Implementation in GO
 <hr />
 
 [![](https://img.shields.io/badge/made%20by-Protocol%20Labs-blue.svg?style=flat-square&cacheSeconds=3600)](https://protocol.ai)
-[![GoDoc](https://img.shields.io/badge/godoc-reference-5272B4.svg?style=flat-square&cacheSeconds=3600)](https://godoc.org/github.com/ipfs/kubo)
+[![GoDoc](https://img.shields.io/badge/godoc-reference-5272B4.svg?style=flat-square&cacheSeconds=3600)](https://godoc.org/github.com/jmfrank63/kubo)
 
 ## What is Kubo?
 
@@ -299,7 +299,7 @@ export PATH=$PATH:$GOPATH/bin
 #### Download and Compile IPFS
 
 ```
-$ git clone https://github.com/ipfs/kubo.git
+$ git clone https://github.com/jmfrank63/kubo.git
 
 $ cd kubo
 $ make install

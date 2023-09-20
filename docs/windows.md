@@ -29,7 +29,7 @@ An explanation of this block is below.
 ```
 SET PATH=%PATH%;\msys64\usr\bin
 pacman --noconfirm -S  git make unzip
-go get -u github.com/ipfs/kubo
+go get -u github.com/jmfrank63/kubo
 cd %GOPATH%\src\github.com\ipfs\kubo
 make install
 %GOPATH%\bin\ipfs.exe version --all
@@ -42,7 +42,7 @@ If `ipfs.exe` executes and the version string matches, then building was success
 | ---: | :--- |
 |`SET PATH=%PATH%;\msys64\usr\bin`         |Add msys2's tools to our [`PATH`](https://ss64.com/nt/path.html); Defaults to: (\msys64\usr\bin)|
 |`pacman --noconfirm -S  git make unzip`   |Install `kubo` build dependencies|
-|`go get -u github.com/ipfs/kubo`       |Fetch / Update `kubo` source|
+|`go get -u github.com/jmfrank63/kubo`       |Fetch / Update `kubo` source|
 |`cd %GOPATH%\src\github.com\ipfs\kubo` |Change to `kubo` source directory|
 |`make install`                            |Build and install to `%GOPATH%\bin\ipfs.exe`|
 |`%GOPATH%\bin\ipfs.exe version --all`     |Test the built binary|
@@ -75,7 +75,7 @@ An explanation of this block is below.
 SET PATH=%PATH%;\cygwin64\bin
 mkdir %GOPATH%\src\github.com\ipfs
 cd %GOPATH%\src\github.com\ipfs
-git clone https://github.com/ipfs/kubo.git
+git clone https://github.com/jmfrank63/kubo.git
 cd %GOPATH%\src\github.com\ipfs\kubo
 make install
 %GOPATH%\bin\ipfs.exe version --all
@@ -87,7 +87,7 @@ If `ipfs.exe` executes and the version string matches, then building was success
 |Command|Explanation|
 | ---: | :--- |
 |`SET PATH=%PATH%;\cygwin64\bin`           |Add Cygwin's tools to our [`PATH`](https://ss64.com/nt/path.html); Defaults to: (\cygwin64\bin)|
-|`mkdir %GOPATH%\src\github.com\ipfs`<br/>`cd %GOPATH%\src\github.com\ipfs`<br/>`git clone https://github.com/ipfs/kubo.git`       |Fetch / Update `kubo` source|
+|`mkdir %GOPATH%\src\github.com\ipfs`<br/>`cd %GOPATH%\src\github.com\ipfs`<br/>`git clone https://github.com/jmfrank63/kubo.git`       |Fetch / Update `kubo` source|
 |`cd %GOPATH%\src\github.com\ipfs\kubo` |Change to `kubo` source directory|
 |`make install`                            |Build and install to `%GOPATH%\bin\ipfs.exe`|
 |`%GOPATH%\bin\ipfs.exe version --all`     |Test the built binary|
@@ -116,13 +116,13 @@ Clone and change directory to the source code, if you haven't already:
 
 CMD:
 ```bat
-git clone https://github.com/ipfs/kubo %GOPATH%/src/github.com/ipfs/kubo
+git clone https://github.com/jmfrank63/kubo %GOPATH%/src/github.com/jmfrank63/kubo
 cd %GOPATH%/src/github.com/jmfrank63/kubo/cmd/ipfs
 ```
 
 PowerShell:
 ```powershell
-git clone https://github.com/ipfs/kubo $env:GOPATH/src/github.com/ipfs/kubo
+git clone https://github.com/jmfrank63/kubo $env:GOPATH/src/github.com/jmfrank63/kubo
 cd $env:GOPATH/src/github.com/jmfrank63/kubo/cmd/ipfs
 ```
 
@@ -134,13 +134,13 @@ Finally, we'll build and test `ipfs` itself.
 
 CMD:
 ```bat
-go install -ldflags="-X "github.com/ipfs/kubo".CurrentCommit=%SHA%"
+go install -ldflags="-X "github.com/jmfrank63/kubo".CurrentCommit=%SHA%"
 %GOPATH%\bin\ipfs.exe version --all
 ```
 
 PowerShell:
 ```powershell
-go install -ldflags="-X "github.com/ipfs/kubo".CurrentCommit=$env:SHA"
+go install -ldflags="-X "github.com/jmfrank63/kubo".CurrentCommit=$env:SHA"
 cp ./ipfs.exe $env:GOPATH/bin/ipfs.exe -force
 . $env:GOPATH/bin/ipfs.exe version --all
 ```

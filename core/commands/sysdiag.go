@@ -5,7 +5,7 @@ import (
 	"path"
 	"runtime"
 
-	version "github.com/ipfs/kubo"
+	version "github.com/jmfrank63/kubo"
 	"github.com/jmfrank63/kubo/core"
 	cmdenv "github.com/jmfrank63/kubo/core/commands/cmdenv"
 

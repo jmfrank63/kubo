@@ -11,7 +11,7 @@ import (
 	"github.com/ipfs/boxo/routing/http/contentrouter"
 	"github.com/ipfs/go-datastore"
 	logging "github.com/ipfs/go-log"
-	version "github.com/ipfs/kubo"
+	version "github.com/jmfrank63/kubo"
 	"github.com/jmfrank63/kubo/config"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p-kad-dht/dual"

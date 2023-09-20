@@ -15,7 +15,7 @@ import (
 
 	multierror "github.com/hashicorp/go-multierror"
 
-	version "github.com/ipfs/kubo"
+	version "github.com/jmfrank63/kubo"
 	utilmain "github.com/jmfrank63/kubo/cmd/ipfs/util"
 	oldcmds "github.com/jmfrank63/kubo/commands"
 	config "github.com/jmfrank63/kubo/config"

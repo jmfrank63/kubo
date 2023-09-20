@@ -22,7 +22,7 @@ import (
 	"github.com/ipfs/go-ipfs-cmds/cli"
 	cmdhttp "github.com/ipfs/go-ipfs-cmds/http"
 	logging "github.com/ipfs/go-log"
-	ipfs "github.com/ipfs/kubo"
+	ipfs "github.com/jmfrank63/kubo"
 	"github.com/jmfrank63/kubo/cmd/ipfs/util"
 	oldcmds "github.com/jmfrank63/kubo/commands"
 	"github.com/jmfrank63/kubo/core"

@@ -12,7 +12,7 @@ import (
 	path "github.com/ipfs/boxo/path"
 	cmds "github.com/ipfs/go-ipfs-cmds"
 	cmdsHttp "github.com/ipfs/go-ipfs-cmds/http"
-	version "github.com/ipfs/kubo"
+	version "github.com/jmfrank63/kubo"
 	oldcmds "github.com/jmfrank63/kubo/commands"
 	config "github.com/jmfrank63/kubo/config"
 	"github.com/jmfrank63/kubo/core"

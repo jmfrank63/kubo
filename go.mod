@@ -36,7 +36,6 @@ require (
 	github.com/ipfs/go-metrics-interface v0.0.1
 	github.com/ipfs/go-metrics-prometheus v0.0.2
 	github.com/ipfs/go-unixfsnode v1.7.1
-	github.com/ipfs/kubo v0.22.0
 	github.com/ipld/go-car v0.5.0
 	github.com/ipld/go-car/v2 v2.10.2-0.20230622090957-499d0c909d33
 	github.com/ipld/go-codec-dagpb v1.6.0
@@ -159,7 +158,6 @@ require (
 	github.com/libp2p/go-libp2p-asn-util v0.3.0 // indirect
 	github.com/libp2p/go-libp2p-gostream v0.6.0 // indirect
 	github.com/libp2p/go-libp2p-xor v0.1.0 // indirect
-	github.com/libp2p/go-libp2p/p2p/muxer/mplex v0.0.0-00010101000000-000000000000 // indirect
 	github.com/libp2p/go-msgio v0.3.0 // indirect
 	github.com/libp2p/go-nat v0.2.0 // indirect
 	github.com/libp2p/go-netroute v0.2.1 // indirect

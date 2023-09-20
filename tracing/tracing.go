@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/ipfs/boxo/tracing"
-	version "github.com/ipfs/kubo"
+	version "github.com/jmfrank63/kubo"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/sdk/resource"
 	"go.opentelemetry.io/otel/sdk/trace"

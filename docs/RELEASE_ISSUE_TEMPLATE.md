@@ -62,13 +62,13 @@ This section covers tasks to be done ahead of the release.
   - [ ] [access to IPFS network metrics](https://github.com/protocol/pldw/blob/624f47cf4ec14ad2cec6adf601a9f7b203ef770d/docs/sources/ipfs.md#ipfs-network-metrics) dashboards in Grafana
     - open an access request in the [pldw](https://github.com/protocol/pldw/issues/new/choose)
     - [example](https://github.com/protocol/pldw/issues/158)
-  - [ ] [kuboreleaser](https://github.com/ipfs/kuboreleaser) checked out on your system (_only if you're using [kuboreleaser](https://github.com/ipfs/kuboreleaser)_)
+  - [ ] [kuboreleaser](https://github.com/jmfrank63/kuboreleaser) checked out on your system (_only if you're using [kuboreleaser](https://github.com/jmfrank63/kuboreleaser)_)
   - [ ] [Thunderdome](https://github.com/ipfs-shipyard/thunderdome) checked out on your system and configured (see the [Thunderdome release docs](./releases_thunderdome.md) for setup)
-  - [ ] [docker](https://docs.docker.com/get-docker/) installed on your system (_only if you're using [kuboreleaser](https://github.com/ipfs/kuboreleaser)_)
-  - [ ] [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) installed on your system (_only if you're **NOT** using [kuboreleaser](https://github.com/ipfs/kuboreleaser)_)
+  - [ ] [docker](https://docs.docker.com/get-docker/) installed on your system (_only if you're using [kuboreleaser](https://github.com/jmfrank63/kuboreleaser)_)
+  - [ ] [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) installed on your system (_only if you're **NOT** using [kuboreleaser](https://github.com/jmfrank63/kuboreleaser)_)
   - [ ] [zsh](https://github.com/ohmyzsh/ohmyzsh/wiki/Installing-ZSH#install-and-set-up-zsh-as-default) installed on your system
-  - [ ] [kubo](https://github.com/ipfs/kubo) checked out under `$(go env GOPATH)/src/github.com/ipfs/kubo`
-    - you can also symlink your clone to the expected location by running `mkdir -p $(go env GOPATH)/src/github.com/ipfs && ln -s $(pwd) $(go env GOPATH)/src/github.com/ipfs/kubo`
+  - [ ] [kubo](https://github.com/jmfrank63/kubo) checked out under `$(go env GOPATH)/src/github.com/jmfrank63/kubo`
+    - you can also symlink your clone to the expected location by running `mkdir -p $(go env GOPATH)/src/github.com/ipfs && ln -s $(pwd) $(go env GOPATH)/src/github.com/jmfrank63/kubo`
   - [ ] ![](https://img.shields.io/badge/not-PATCH-yellow?style=flat-square) [Reddit](https://www.reddit.com) account
 - ![](https://img.shields.io/badge/not-PATCH-yellow?style=flat-square) Upgrade Go used in CI to the latest patch release available in [CircleCI](https://hub.docker.com/r/cimg/go/tags) in:
   - [ ] ![](https://img.shields.io/badge/not-PATCH-yellow?style=flat-square) [ipfs/distributions](https://github.com/ipfs/distributions)
@@ -204,7 +204,7 @@ This section covers tasks to be done during each release.
   - [ ] ![](https://img.shields.io/badge/only-FINAL-green?style=flat-square) ![](https://img.shields.io/badge/not-PATCH-yellow?style=flat-square) Create the next release issue
   </details>
 - [ ] ![](https://img.shields.io/badge/only-FINAL-green?style=flat-square) ![](https://img.shields.io/badge/not-PATCH-yellow?style=flat-square) Create a dependency update PR
-  - [ ] ![](https://img.shields.io/badge/only-FINAL-green?style=flat-square) ![](https://img.shields.io/badge/not-PATCH-yellow?style=flat-square) check out [ipfs/kubo](https://github.com/ipfs/kubo)
+  - [ ] ![](https://img.shields.io/badge/only-FINAL-green?style=flat-square) ![](https://img.shields.io/badge/not-PATCH-yellow?style=flat-square) check out [ipfs/kubo](https://github.com/jmfrank63/kubo)
   - [ ] ![](https://img.shields.io/badge/only-FINAL-green?style=flat-square) ![](https://img.shields.io/badge/not-PATCH-yellow?style=flat-square) run `go get -u` in root directory
   - [ ] ![](https://img.shields.io/badge/only-FINAL-green?style=flat-square) ![](https://img.shields.io/badge/not-PATCH-yellow?style=flat-square) run `go mod tidy` in root directory
   - [ ] ![](https://img.shields.io/badge/only-FINAL-green?style=flat-square) ![](https://img.shields.io/badge/not-PATCH-yellow?style=flat-square) run `go mod tidy` in `docs/examples/kubo-as-a-library` directory

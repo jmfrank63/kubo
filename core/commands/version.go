@@ -6,7 +6,7 @@ import (
 	"io"
 	"runtime/debug"
 
-	version "github.com/ipfs/kubo"
+	version "github.com/jmfrank63/kubo"
 
 	cmds "github.com/ipfs/go-ipfs-cmds"
 )

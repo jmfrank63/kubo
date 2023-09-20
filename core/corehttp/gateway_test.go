@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/ipfs/boxo/namesys"
-	version "github.com/ipfs/kubo"
+	version "github.com/jmfrank63/kubo"
 	"github.com/jmfrank63/kubo/core"
 	"github.com/jmfrank63/kubo/core/coreapi"
 	"github.com/jmfrank63/kubo/repo"
