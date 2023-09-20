@@ -5,11 +5,11 @@ import (
 
 	context "context"
 
-	"github.com/ipfs/kubo/repo"
+	"github.com/jmfrank63/kubo/repo"
 
 	datastore "github.com/ipfs/go-datastore"
 	syncds "github.com/ipfs/go-datastore/sync"
-	config "github.com/ipfs/kubo/config"
+	config "github.com/jmfrank63/kubo/config"
 )
 
 func TestInitialization(t *testing.T) {

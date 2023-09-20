@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/ipfs/go-datastore"
-	"github.com/ipfs/kubo/config"
-	irouting "github.com/ipfs/kubo/routing"
+	"github.com/jmfrank63/kubo/config"
+	irouting "github.com/jmfrank63/kubo/routing"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	dual "github.com/libp2p/go-libp2p-kad-dht/dual"
 	record "github.com/libp2p/go-libp2p-record"
@@ -32,7 +32,7 @@ type RoutingOption func(args RoutingOptionArgs) (routing.Routing, error)
 
 // Default HTTP routers used in parallel to DHT when Routing.Type = "auto"
 var defaultHTTPRouters = []string{
-	"https://cid.contact", // https://github.com/ipfs/kubo/issues/9422#issuecomment-1338142084
+	"https://cid.contact", // https://github.com/jmfrank63/kubo/issues/9422#issuecomment-1338142084
 	// TODO: add an independent router from Cloudflare
 }
 
@@ -62,8 +62,8 @@ func constructDefaultHTTPRouters(cfg *config.Config) ([]*routinghelpers.Parallel
 
 		routers = append(routers, &routinghelpers.ParallelRouter{
 			Router:                  r,
-			IgnoreError:             true,             // https://github.com/ipfs/kubo/pull/9475#discussion_r1042507387
-			Timeout:                 15 * time.Second, // 5x server value from https://github.com/ipfs/kubo/pull/9475#discussion_r1042428529
+			IgnoreError:             true,             // https://github.com/jmfrank63/kubo/pull/9475#discussion_r1042507387
+			Timeout:                 15 * time.Second, // 5x server value from https://github.com/jmfrank63/kubo/pull/9475#discussion_r1042428529
 			DoNotWaitForSearchValue: true,
 			ExecuteAfter:            0,
 		})

@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/blang/semver/v4"
-	"github.com/ipfs/kubo/test/cli/harness"
-	. "github.com/ipfs/kubo/test/cli/testutils"
+	"github.com/jmfrank63/kubo/test/cli/harness"
+	. "github.com/jmfrank63/kubo/test/cli/testutils"
 	"github.com/stretchr/testify/assert"
 	gomod "golang.org/x/mod/module"
 )

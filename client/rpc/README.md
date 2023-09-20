@@ -6,7 +6,7 @@ This packages implements [`coreiface.CoreAPI`](https://pkg.go.dev/github.com/ipf
 
 ## Documentation
 
-https://pkg.go.dev/github.com/ipfs/kubo/client/rpc
+https://pkg.go.dev/github.com/jmfrank63/kubo/client/rpc
 
 ### Example
 
@@ -19,7 +19,7 @@ import (
     "context"
     "fmt"
 
-    "github.com/ipfs/kubo/client/rpc"
+    "github.com/jmfrank63/kubo/client/rpc"
     path "github.com/ipfs/boxo/coreiface/path"
 )
 

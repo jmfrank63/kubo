@@ -123,7 +123,7 @@ This profile may only be applied when first initializing the node.
 	"flatfs": {
 		Description: `Configures the node to use the flatfs datastore.
 
-This is the most battle-tested and reliable datastore. 
+This is the most battle-tested and reliable datastore.
 You should use this datastore if:
 
 * You need a very simple and very reliable datastore, and you trust your
@@ -146,7 +146,7 @@ This profile may only be applied when first initializing the node.
 	"badgerds": {
 		Description: `Configures the node to use the experimental badger datastore.
 
-Use this datastore if some aspects of performance, 
+Use this datastore if some aspects of performance,
 especially the speed of adding many gigabytes of files, are critical.
 However, be aware that:
 
@@ -154,7 +154,7 @@ However, be aware that:
   smaller than several gigabytes.  If you run IPFS with --enable-gc, you plan
   on storing very little data in your IPFS node, and disk usage is more
   critical than performance, consider using flatfs.
-* This datastore uses up to several gigabytes of memory.  
+* This datastore uses up to several gigabytes of memory.
 * Good for medium-size datastores, but may run into performance issues
   if your dataset is bigger than a terabyte.
 * The current implementation is based on old badger 1.x
@@ -174,7 +174,7 @@ functionality - performance of content discovery and data
 fetching may be degraded.
 `,
 		Transform: func(c *Config) error {
-			c.Routing.Type = NewOptionalString("dhtclient") // TODO: https://github.com/ipfs/kubo/issues/9480
+			c.Routing.Type = NewOptionalString("dhtclient") // TODO: https://github.com/jmfrank63/kubo/issues/9480
 			c.AutoNAT.ServiceMode = AutoNATServiceDisabled
 			c.Reprovider.Interval = NewOptionalDuration(0)
 

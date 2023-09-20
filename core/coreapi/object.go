@@ -22,7 +22,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 
-	"github.com/ipfs/kubo/tracing"
+	"github.com/jmfrank63/kubo/tracing"
 )
 
 const inputLimit = 2 << 20

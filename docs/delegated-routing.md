@@ -2,12 +2,12 @@
 
 - Start Date: 2022-08-15
 - Related Issues:
-  - https://github.com/ipfs/kubo/issues/9188
-  - https://github.com/ipfs/kubo/issues/9079
+  - https://github.com/jmfrank63/kubo/issues/9188
+  - https://github.com/jmfrank63/kubo/issues/9079
 
 ## Summary
 
-Previously we only used DHT for content routing and content providing. After kubo-0.14.0 release we added support for [delegated routing using Reframe protocol](https://github.com/ipfs/kubo/pull/8997).
+Previously we only used DHT for content routing and content providing. After kubo-0.14.0 release we added support for [delegated routing using Reframe protocol](https://github.com/jmfrank63/kubo/pull/8997).
 
 Now we need a better way to add different routers using different protocols like Reframe or DHT, and be able to configure them to cover different use cases.
 
@@ -288,7 +288,7 @@ All methods involved:
 type Routing interface {
     Provide(context.Context, cid.Cid, bool) error
     FindProvidersAsync(context.Context, cid.Cid, int) <-chan peer.AddrInfo
-    
+
     FindPeer(context.Context, peer.ID) (peer.AddrInfo, error)
 
     PutValue(context.Context, string, []byte, ...Option) error
@@ -450,9 +450,9 @@ No new security implications or considerations were found.
 
 I got ideas from all of the following links to create this design document:
 
-- https://github.com/ipfs/kubo/issues/9079#issuecomment-1211288268
-- https://github.com/ipfs/kubo/issues/9157
-- https://github.com/ipfs/kubo/issues/9079#issuecomment-1205000253
+- https://github.com/jmfrank63/kubo/issues/9079#issuecomment-1211288268
+- https://github.com/jmfrank63/kubo/issues/9157
+- https://github.com/jmfrank63/kubo/issues/9079#issuecomment-1205000253
 - https://www.notion.so/pl-strflt/Delegated-Routing-Thoughts-very-very-WIP-0543bc51b1bd4d63a061b0f28e195d38
 - https://gist.github.com/guseggert/effa027ff4cbadd7f67598efb6704d12
 

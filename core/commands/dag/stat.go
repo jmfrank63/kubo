@@ -10,8 +10,8 @@ import (
 	"github.com/ipfs/boxo/ipld/merkledag/traverse"
 	cid "github.com/ipfs/go-cid"
 	cmds "github.com/ipfs/go-ipfs-cmds"
-	"github.com/ipfs/kubo/core/commands/cmdenv"
-	"github.com/ipfs/kubo/core/commands/e"
+	"github.com/jmfrank63/kubo/core/commands/cmdenv"
+	"github.com/jmfrank63/kubo/core/commands/e"
 )
 
 // TODO cache every cid traversal in a dp cache

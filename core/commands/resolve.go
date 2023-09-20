@@ -8,8 +8,8 @@ import (
 	"time"
 
 	ns "github.com/ipfs/boxo/namesys"
-	cmdenv "github.com/ipfs/kubo/core/commands/cmdenv"
-	ncmd "github.com/ipfs/kubo/core/commands/name"
+	cmdenv "github.com/jmfrank63/kubo/core/commands/cmdenv"
+	ncmd "github.com/jmfrank63/kubo/core/commands/name"
 
 	options "github.com/ipfs/boxo/coreiface/options"
 	nsopts "github.com/ipfs/boxo/coreiface/options/namesys"

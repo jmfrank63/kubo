@@ -6,7 +6,7 @@ import (
 	ft "github.com/ipfs/boxo/ipld/unixfs"
 	nsys "github.com/ipfs/boxo/namesys"
 	path "github.com/ipfs/boxo/path"
-	"github.com/ipfs/kubo/core"
+	"github.com/jmfrank63/kubo/core"
 	ci "github.com/libp2p/go-libp2p/core/crypto"
 )
 

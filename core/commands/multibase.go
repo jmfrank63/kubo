@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	cmds "github.com/ipfs/go-ipfs-cmds"
-	"github.com/ipfs/kubo/core/commands/cmdenv"
+	"github.com/jmfrank63/kubo/core/commands/cmdenv"
 	mbase "github.com/multiformats/go-multibase"
 )
 

@@ -32,7 +32,7 @@ IPFS is a global, versioned, peer-to-peer filesystem. It combines good ideas fro
 For more info see: https://docs.ipfs.tech/concepts/what-is-ipfs/
 
 Before opening an issue, consider using one of the following locations to ensure you are opening your thread in the right place:
-  - kubo (previously named go-ipfs) _implementation_ bugs in [this repo](https://github.com/ipfs/kubo/issues).
+  - kubo (previously named go-ipfs) _implementation_ bugs in [this repo](https://github.com/jmfrank63/kubo/issues).
   - Documentation issues in [ipfs/docs issues](https://github.com/ipfs/ipfs-docs/issues).
   - IPFS _design_ in [ipfs/specs issues](https://github.com/ipfs/specs/issues).
   - Exploration of new ideas in [ipfs/notes issues](https://github.com/ipfs/notes/issues).
@@ -43,7 +43,7 @@ Before opening an issue, consider using one of the following locations to ensure
 
 ## Next milestones
 
-[Milestones on GitHub](https://github.com/ipfs/kubo/milestones)
+[Milestones on GitHub](https://github.com/jmfrank63/kubo/milestones)
 
 
 ## Table of Contents
@@ -127,7 +127,7 @@ From there:
 - Move kubo (`ipfs`) to your path (`install.sh` can do it for you).
 
 If you are unable to access [dist.ipfs.tech](https://dist.ipfs.tech#kubo), you can also download kubo (go-ipfs) from:
-- this project's GitHub [releases](https://github.com/ipfs/kubo/releases/latest) page
+- this project's GitHub [releases](https://github.com/jmfrank63/kubo/releases/latest) page
 - `/ipns/dist.ipfs.tech` at [dweb.link](https://dweb.link/ipns/dist.ipfs.tech#kubo) gateway
 
 #### Updating
@@ -217,7 +217,7 @@ You can also install it through the Solus software center.
 
 #### Snap
 
-No longer supported, see rationale in [kubo#8688](https://github.com/ipfs/kubo/issues/8688).
+No longer supported, see rationale in [kubo#8688](https://github.com/jmfrank63/kubo/issues/8688).
 
 ### Unofficial Windows packages
 
@@ -226,7 +226,7 @@ No longer supported, see rationale in [kubo#8688](https://github.com/ipfs/kubo/i
 
 #### Chocolatey
 
-No longer supported, see rationale in [kubo#9341](https://github.com/ipfs/kubo/issues/9341).
+No longer supported, see rationale in [kubo#9341](https://github.com/jmfrank63/kubo/issues/9341).
 
 #### Scoop
 
@@ -335,7 +335,7 @@ Note: OpenSSL requires CGO support and, by default, CGO is disabled when cross-c
 - If you are interested in development, please install the development
 dependencies as well.
 - Shell command completions can be generated with one of the `ipfs commands completion` subcommands. Read [docs/command-completion.md](docs/command-completion.md) to learn more.
-- See the [misc folder](https://github.com/ipfs/kubo/tree/master/misc) for how to connect IPFS to systemd or whatever init system your distro uses.
+- See the [misc folder](https://github.com/jmfrank63/kubo/tree/master/misc) for how to connect IPFS to systemd or whatever init system your distro uses.
 
 ## Getting Started
 
@@ -369,7 +369,7 @@ If you have previously installed IPFS before and you are running into problems g
 
 Please direct general questions and help requests to our [forums](https://discuss.ipfs.tech).
 
-If you believe you've found a bug, check the [issues list](https://github.com/ipfs/kubo/issues) and, if you don't see your problem there, either come talk to us on [Matrix chat](https://docs.ipfs.tech/community/chat/), or file an issue of your own!
+If you believe you've found a bug, check the [issues list](https://github.com/jmfrank63/kubo/issues) and, if you don't see your problem there, either come talk to us on [Matrix chat](https://docs.ipfs.tech/community/chat/), or file an issue of your own!
 
 ## Packages
 
@@ -379,13 +379,13 @@ See [IPFS in GO](https://docs.ipfs.tech/reference/go/api/) documentation.
 
 Some places to get you started on the codebase:
 
-- Main file: [./cmd/ipfs/main.go](https://github.com/ipfs/kubo/blob/master/cmd/ipfs/main.go)
-- CLI Commands: [./core/commands/](https://github.com/ipfs/kubo/tree/master/core/commands)
+- Main file: [./cmd/ipfs/main.go](https://github.com/jmfrank63/kubo/blob/master/cmd/ipfs/main.go)
+- CLI Commands: [./core/commands/](https://github.com/jmfrank63/kubo/tree/master/core/commands)
 - Bitswap (the data trading engine): [go-bitswap](https://github.com/ipfs/go-bitswap)
 - libp2p
   - libp2p: https://github.com/libp2p/go-libp2p
   - DHT: https://github.com/libp2p/go-libp2p-kad-dht
-- [IPFS : The `Add` command demystified](https://github.com/ipfs/kubo/tree/master/docs/add-code-flow.md)
+- [IPFS : The `Add` command demystified](https://github.com/jmfrank63/kubo/tree/master/docs/add-code-flow.md)
 
 ### Map of Implemented Subsystems
 **WIP**: This is a high-level architecture diagram of the various sub-systems of this specific implementation. To be updated with how they interact. Anyone who has suggestions is welcome to comment [here](https://docs.google.com/drawings/d/1OVpBT2q-NtSJqlPX3buvjYhOnWfdzb85YEsM_njesME/edit) on how we can improve this!
@@ -433,5 +433,5 @@ Please reach out to us in one [chat](https://docs.ipfs.tech/community/chat/) roo
 
 This project is dual-licensed under Apache 2.0 and MIT terms:
 
-- Apache License, Version 2.0, ([LICENSE-APACHE](https://github.com/ipfs/kubo/blob/master/LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
-- MIT license ([LICENSE-MIT](https://github.com/ipfs/kubo/blob/master/LICENSE-MIT) or http://opensource.org/licenses/MIT)
+- Apache License, Version 2.0, ([LICENSE-APACHE](https://github.com/jmfrank63/kubo/blob/master/LICENSE-APACHE) or http://www.apache.org/licenses/LICENSE-2.0)
+- MIT license ([LICENSE-MIT](https://github.com/jmfrank63/kubo/blob/master/LICENSE-MIT) or http://opensource.org/licenses/MIT)

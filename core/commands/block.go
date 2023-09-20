@@ -8,8 +8,8 @@ import (
 
 	"github.com/ipfs/boxo/files"
 
-	cmdenv "github.com/ipfs/kubo/core/commands/cmdenv"
-	"github.com/ipfs/kubo/core/commands/cmdutils"
+	cmdenv "github.com/jmfrank63/kubo/core/commands/cmdenv"
+	"github.com/jmfrank63/kubo/core/commands/cmdutils"
 
 	options "github.com/ipfs/boxo/coreiface/options"
 	path "github.com/ipfs/boxo/coreiface/path"

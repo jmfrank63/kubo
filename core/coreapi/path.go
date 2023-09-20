@@ -6,7 +6,7 @@ import (
 	gopath "path"
 
 	"github.com/ipfs/boxo/namesys/resolve"
-	"github.com/ipfs/kubo/tracing"
+	"github.com/jmfrank63/kubo/tracing"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"

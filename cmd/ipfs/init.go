@@ -12,16 +12,16 @@ import (
 
 	unixfs "github.com/ipfs/boxo/ipld/unixfs"
 	path "github.com/ipfs/boxo/path"
-	assets "github.com/ipfs/kubo/assets"
-	oldcmds "github.com/ipfs/kubo/commands"
-	core "github.com/ipfs/kubo/core"
-	"github.com/ipfs/kubo/core/commands"
-	fsrepo "github.com/ipfs/kubo/repo/fsrepo"
+	assets "github.com/jmfrank63/kubo/assets"
+	oldcmds "github.com/jmfrank63/kubo/commands"
+	core "github.com/jmfrank63/kubo/core"
+	"github.com/jmfrank63/kubo/core/commands"
+	fsrepo "github.com/jmfrank63/kubo/repo/fsrepo"
 
 	options "github.com/ipfs/boxo/coreiface/options"
 	"github.com/ipfs/boxo/files"
 	cmds "github.com/ipfs/go-ipfs-cmds"
-	config "github.com/ipfs/kubo/config"
+	config "github.com/jmfrank63/kubo/config"
 )
 
 const (

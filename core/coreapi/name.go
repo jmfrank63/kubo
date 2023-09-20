@@ -9,7 +9,7 @@ import (
 	"github.com/ipfs/boxo/ipns"
 	keystore "github.com/ipfs/boxo/keystore"
 	"github.com/ipfs/boxo/namesys"
-	"github.com/ipfs/kubo/tracing"
+	"github.com/jmfrank63/kubo/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 

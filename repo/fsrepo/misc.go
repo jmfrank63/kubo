@@ -3,7 +3,7 @@ package fsrepo
 import (
 	"os"
 
-	config "github.com/ipfs/kubo/config"
+	config "github.com/jmfrank63/kubo/config"
 	homedir "github.com/mitchellh/go-homedir"
 )
 

@@ -19,9 +19,9 @@ import (
 	cidenc "github.com/ipfs/go-cidutil/cidenc"
 	cmds "github.com/ipfs/go-ipfs-cmds"
 
-	core "github.com/ipfs/kubo/core"
-	cmdenv "github.com/ipfs/kubo/core/commands/cmdenv"
-	e "github.com/ipfs/kubo/core/commands/e"
+	core "github.com/jmfrank63/kubo/core"
+	cmdenv "github.com/jmfrank63/kubo/core/commands/cmdenv"
+	e "github.com/jmfrank63/kubo/core/commands/e"
 )
 
 var PinCmd = &cmds.Command{

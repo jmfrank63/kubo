@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"strings"
 
-	. "github.com/ipfs/kubo/test/cli/testutils"
+	. "github.com/jmfrank63/kubo/test/cli/testutils"
 )
 
 func (n *Node) IPFSCommands() []string {

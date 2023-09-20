@@ -6,8 +6,8 @@ import (
 	"time"
 
 	logging "github.com/ipfs/go-log"
-	core "github.com/ipfs/kubo/core"
-	plugin "github.com/ipfs/kubo/plugin"
+	core "github.com/jmfrank63/kubo/core"
+	plugin "github.com/jmfrank63/kubo/plugin"
 	event "github.com/libp2p/go-libp2p/core/event"
 	network "github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"

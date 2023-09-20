@@ -18,9 +18,9 @@ import (
 	offlineroute "github.com/ipfs/boxo/routing/offline"
 	"github.com/ipfs/go-cid"
 	version "github.com/ipfs/kubo"
-	"github.com/ipfs/kubo/config"
-	"github.com/ipfs/kubo/core"
-	"github.com/ipfs/kubo/core/node"
+	"github.com/jmfrank63/kubo/config"
+	"github.com/jmfrank63/kubo/core"
+	"github.com/jmfrank63/kubo/core/node"
 	"github.com/libp2p/go-libp2p/core/routing"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )

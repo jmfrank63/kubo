@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ipfs/kubo/core"
-	"github.com/ipfs/kubo/gc"
-	"github.com/ipfs/kubo/repo"
+	"github.com/jmfrank63/kubo/core"
+	"github.com/jmfrank63/kubo/gc"
+	"github.com/jmfrank63/kubo/repo"
 
 	"github.com/ipfs/boxo/blockservice"
 	blockstore "github.com/ipfs/boxo/blockstore"
@@ -24,7 +24,7 @@ import (
 	"github.com/ipfs/go-cid"
 	"github.com/ipfs/go-datastore"
 	syncds "github.com/ipfs/go-datastore/sync"
-	config "github.com/ipfs/kubo/config"
+	config "github.com/jmfrank63/kubo/config"
 )
 
 const testPeerID = "QmTFauExutTsy4XP6JbMFcw2Wa9645HJt2bTqL6qYDCKfe"

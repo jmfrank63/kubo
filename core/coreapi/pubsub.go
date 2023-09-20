@@ -6,7 +6,7 @@ import (
 
 	coreiface "github.com/ipfs/boxo/coreiface"
 	caopts "github.com/ipfs/boxo/coreiface/options"
-	"github.com/ipfs/kubo/tracing"
+	"github.com/jmfrank63/kubo/tracing"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	peer "github.com/libp2p/go-libp2p/core/peer"
 	routing "github.com/libp2p/go-libp2p/core/routing"

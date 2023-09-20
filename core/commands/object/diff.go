@@ -8,7 +8,7 @@ import (
 	"github.com/ipfs/boxo/ipld/merkledag/dagutils"
 	cmds "github.com/ipfs/go-ipfs-cmds"
 
-	cmdenv "github.com/ipfs/kubo/core/commands/cmdenv"
+	cmdenv "github.com/jmfrank63/kubo/core/commands/cmdenv"
 )
 
 const (
@@ -20,7 +20,7 @@ type Changes struct {
 }
 
 var ObjectDiffCmd = &cmds.Command{
-	Status: cmds.Deprecated, // https://github.com/ipfs/kubo/issues/7936
+	Status: cmds.Deprecated, // https://github.com/jmfrank63/kubo/issues/7936
 	Helptext: cmds.HelpText{
 		Tagline: "Display the diff between two IPFS objects.",
 		ShortDescription: `

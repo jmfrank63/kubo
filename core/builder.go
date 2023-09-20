@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/ipfs/kubo/core/bootstrap"
-	"github.com/ipfs/kubo/core/node"
+	"github.com/jmfrank63/kubo/core/bootstrap"
+	"github.com/jmfrank63/kubo/core/node"
 
 	"github.com/ipfs/go-metrics-interface"
 	"go.uber.org/dig"
@@ -84,7 +84,7 @@ func NewNode(ctx context.Context, cfg *BuildCfg) (*IpfsNode, error) {
 			return nil, fmt.Errorf("building fx opts: %w", err)
 		}
 	}
-	//nolint:staticcheck // https://github.com/ipfs/kubo/pull/9423#issuecomment-1341038770
+	//nolint:staticcheck // https://github.com/jmfrank63/kubo/pull/9423#issuecomment-1341038770
 	opts = append(opts, fx.Extract(n))
 
 	app := fx.New(opts...)

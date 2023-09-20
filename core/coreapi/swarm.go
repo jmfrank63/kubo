@@ -6,7 +6,7 @@ import (
 	"time"
 
 	coreiface "github.com/ipfs/boxo/coreiface"
-	"github.com/ipfs/kubo/tracing"
+	"github.com/jmfrank63/kubo/tracing"
 	inet "github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 	pstore "github.com/libp2p/go-libp2p/core/peerstore"

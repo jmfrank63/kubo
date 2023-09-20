@@ -22,7 +22,7 @@ var LogCmd = &cmds.Command{
 'ipfs log' contains utility commands to affect or read the logging
 output of a running daemon.
 
-There are also two environmental variables that direct the logging 
+There are also two environmental variables that direct the logging
 system (not just for the daemon logs, but all commands):
     IPFS_LOGGING - sets the level of verbosity of the logging.
         One of: debug, info, warn, error, dpanic, panic, fatal
@@ -111,7 +111,7 @@ var logTailCmd = &cmds.Command{
 		ShortDescription: `
 Outputs event log messages (not other log messages) as they are generated.
 
-Currently broken. Follow https://github.com/ipfs/kubo/issues/9245 for updates.
+Currently broken. Follow https://github.com/jmfrank63/kubo/issues/9245 for updates.
 `,
 	},
 

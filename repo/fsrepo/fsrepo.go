@@ -13,9 +13,9 @@ import (
 
 	filestore "github.com/ipfs/boxo/filestore"
 	keystore "github.com/ipfs/boxo/keystore"
-	repo "github.com/ipfs/kubo/repo"
-	"github.com/ipfs/kubo/repo/common"
-	dir "github.com/ipfs/kubo/thirdparty/dir"
+	repo "github.com/jmfrank63/kubo/repo"
+	"github.com/jmfrank63/kubo/repo/common"
+	dir "github.com/jmfrank63/kubo/thirdparty/dir"
 	rcmgr "github.com/libp2p/go-libp2p/p2p/host/resource-manager"
 
 	util "github.com/ipfs/boxo/util"
@@ -23,9 +23,9 @@ import (
 	measure "github.com/ipfs/go-ds-measure"
 	lockfile "github.com/ipfs/go-fs-lock"
 	logging "github.com/ipfs/go-log"
-	config "github.com/ipfs/kubo/config"
-	serialize "github.com/ipfs/kubo/config/serialize"
-	"github.com/ipfs/kubo/repo/fsrepo/migrations"
+	config "github.com/jmfrank63/kubo/config"
+	serialize "github.com/jmfrank63/kubo/config/serialize"
+	"github.com/jmfrank63/kubo/repo/fsrepo/migrations"
 	homedir "github.com/mitchellh/go-homedir"
 	ma "github.com/multiformats/go-multiaddr"
 )
@@ -475,7 +475,7 @@ func (r *FSRepo) openDatastore() error {
 		return fmt.Errorf("required Datastore.Spec entry missing from config file")
 	}
 	if r.config.Datastore.NoSync {
-		log.Warn("NoSync is now deprecated in favor of datastore specific settings. If you want to disable fsync on flatfs set 'sync' to false. See https://github.com/ipfs/kubo/blob/master/docs/datastores.md#flatfs.")
+		log.Warn("NoSync is now deprecated in favor of datastore specific settings. If you want to disable fsync on flatfs set 'sync' to false. See https://github.com/jmfrank63/kubo/blob/master/docs/datastores.md#flatfs.")
 	}
 
 	dsc, err := AnyDatastoreConfig(r.config.Datastore.Spec)
@@ -619,7 +619,7 @@ func (r *FSRepo) BackupConfig(prefix string) (string, error) {
 // evidenced by the issue of `omitempty` property of fields that aren't defined
 // by the user and Go still needs to initialize them to its default (which
 // is not reflected in the repo's config file, see
-// https://github.com/ipfs/kubo/issues/8088 for more details).
+// https://github.com/jmfrank63/kubo/issues/8088 for more details).
 // In general we should call this API with a JSON nested maps as argument
 // (`map[string]interface{}`). Many calls to this function are forced to
 // synthesize the config.Config struct from their available JSON map just to

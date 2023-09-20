@@ -69,7 +69,7 @@ test_expect_success "OPTIONS response for Gateway resource looks good" '
 '
 
 # HTTP OPTIONS Request on path → subdomain HTTP 301 redirect
-# (regression test for https://github.com/ipfs/kubo/issues/9983#issuecomment-1599673976)
+# (regression test for https://github.com/jmfrank63/kubo/issues/9983#issuecomment-1599673976)
 test_expect_success "OPTIONS to Gateway succeeds" '
   curl -svX OPTIONS -H "Origin: https://example.com" "http://localhost:$GWAY_PORT/ipfs/$thash" 2>curl_output &&
   cat curl_output
@@ -159,7 +159,7 @@ test_kill_ipfs_daemon
 
 # TODO: /api/v0 with CORS headers set in API.HTTPHeaders  does not really work,
 # as not all headers are correctly set. Below is only a basic regression test that documents
-# current state. Fixing CORS on /api/v0 (RPC and Gateway port) is tracked in https://github.com/ipfs/kubo/issues/7667
+# current state. Fixing CORS on /api/v0 (RPC and Gateway port) is tracked in https://github.com/jmfrank63/kubo/issues/7667
 
 test_expect_success "Manually set API.HTTPHeaders config to be as relaxed as Gateway.HTTPHeaders" "
   ipfs config --json API.HTTPHeaders.Access-Control-Allow-Origin '[\"https://example.com\"]'

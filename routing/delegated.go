@@ -12,7 +12,7 @@ import (
 	"github.com/ipfs/go-datastore"
 	logging "github.com/ipfs/go-log"
 	version "github.com/ipfs/kubo"
-	"github.com/ipfs/kubo/config"
+	"github.com/jmfrank63/kubo/config"
 	dht "github.com/libp2p/go-libp2p-kad-dht"
 	"github.com/libp2p/go-libp2p-kad-dht/dual"
 	"github.com/libp2p/go-libp2p-kad-dht/fullrt"

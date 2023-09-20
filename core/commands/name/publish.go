@@ -6,13 +6,13 @@ import (
 	"io"
 	"time"
 
-	cmdenv "github.com/ipfs/kubo/core/commands/cmdenv"
+	cmdenv "github.com/jmfrank63/kubo/core/commands/cmdenv"
 
 	iface "github.com/ipfs/boxo/coreiface"
 	options "github.com/ipfs/boxo/coreiface/options"
 	path "github.com/ipfs/boxo/coreiface/path"
 	cmds "github.com/ipfs/go-ipfs-cmds"
-	ke "github.com/ipfs/kubo/core/commands/keyencode"
+	ke "github.com/jmfrank63/kubo/core/commands/keyencode"
 )
 
 var errAllowOffline = errors.New("can't publish while offline: pass `--allow-offline` to override")
@@ -59,7 +59,7 @@ Publish an <ipfs-path> with another name, added by an 'ipfs key' command:
   > ipfs name publish --key=mykey /ipfs/QmatmE9msSfkKxoffpHwNLNKgwZG8eT9Bud6YoPab52vpy
   Published to QmSrPmbaUKA3ZodhzPWZnpFgcPMFWF4QsxXbkWfEptTBJd: /ipfs/QmatmE9msSfkKxoffpHwNLNKgwZG8eT9Bud6YoPab52vpy
 
-Alternatively, publish an <ipfs-path> using a valid PeerID (as listed by 
+Alternatively, publish an <ipfs-path> using a valid PeerID (as listed by
 'ipfs key list -l'):
 
  > ipfs name publish --key=QmbCMUZw6JFeZ7Wp9jkzbye3Fzp2GGcPgC3nmeUjfVF87n /ipfs/QmatmE9msSfkKxoffpHwNLNKgwZG8eT9Bud6YoPab52vpy

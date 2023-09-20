@@ -14,8 +14,8 @@ import (
 	ipldlegacy "github.com/ipfs/go-ipld-legacy"
 	gocarv2 "github.com/ipld/go-car/v2"
 
-	"github.com/ipfs/kubo/core/commands/cmdenv"
-	"github.com/ipfs/kubo/core/commands/cmdutils"
+	"github.com/jmfrank63/kubo/core/commands/cmdenv"
+	"github.com/jmfrank63/kubo/core/commands/cmdutils"
 )
 
 func dagImport(req *cmds.Request, res cmds.ResponseEmitter, env cmds.Environment) error {

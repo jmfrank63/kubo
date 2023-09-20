@@ -1,7 +1,7 @@
 package libp2p
 
 import (
-	"github.com/ipfs/kubo/config"
+	"github.com/jmfrank63/kubo/config"
 
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/p2p/security/noise"

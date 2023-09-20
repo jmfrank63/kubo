@@ -6,7 +6,7 @@ import (
 
 	"github.com/ipfs/boxo/coreiface/path"
 	ipldlegacy "github.com/ipfs/go-ipld-legacy"
-	"github.com/ipfs/kubo/core/commands/cmdenv"
+	"github.com/jmfrank63/kubo/core/commands/cmdenv"
 
 	"github.com/ipld/go-ipld-prime"
 	"github.com/ipld/go-ipld-prime/multicodec"

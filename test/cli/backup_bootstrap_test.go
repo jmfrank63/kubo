@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ipfs/kubo/config"
-	"github.com/ipfs/kubo/test/cli/harness"
+	"github.com/jmfrank63/kubo/config"
+	"github.com/jmfrank63/kubo/test/cli/harness"
 	"github.com/stretchr/testify/assert"
 )
 

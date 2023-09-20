@@ -5,7 +5,7 @@ linters:
 linters-settings:
   stylecheck:
     checks:
-    - all
-    - '-ST1003'
+      - all
+      - "-ST1003"
     dot-import-whitelist:
-      - github.com/ipfs/kubo/test/cli/testutils
+      - github.com/jmfrank63/kubo/test/cli/testutils

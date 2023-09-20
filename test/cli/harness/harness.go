@@ -10,7 +10,7 @@ import (
 	"time"
 
 	logging "github.com/ipfs/go-log/v2"
-	. "github.com/ipfs/kubo/test/cli/testutils"
+	. "github.com/jmfrank63/kubo/test/cli/testutils"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/multiformats/go-multiaddr"
 )

@@ -4,27 +4,27 @@
 If you just want to install kubo, please download it from https://dist.ipfs.tech/#kubo. This document explains how to build it from source.
 
 ## Install Go
-`kubo` is built on Golang and thus depends on it for all building methods.  
-https://golang.org/doc/install  
-The `GOPATH` environment variable must be set as well.  
+`kubo` is built on Golang and thus depends on it for all building methods.
+https://golang.org/doc/install
+The `GOPATH` environment variable must be set as well.
 https://golang.org/doc/code.html#GOPATH
 
 ## Choose the way you want to proceed
-`kubo` utilizes `make` to automate builds and run tests, but can be built without it using only `git` and `go`.  
-No matter which method you choose, if you encounter issues, please see the [Troubleshooting](#troubleshooting) section.  
+`kubo` utilizes `make` to automate builds and run tests, but can be built without it using only `git` and `go`.
+No matter which method you choose, if you encounter issues, please see the [Troubleshooting](#troubleshooting) section.
 
-**Using `make`:**  
-MSYS2 and Cygwin provide the Unix tools we need to build `kubo`. You may use either, but if you don't already have one installed, we recommend MSYS2.  
-[MSYS2→](#msys2)  
-[Cygwin→](#cygwin)  
+**Using `make`:**
+MSYS2 and Cygwin provide the Unix tools we need to build `kubo`. You may use either, but if you don't already have one installed, we recommend MSYS2.
+[MSYS2→](#msys2)
+[Cygwin→](#cygwin)
 
-**Using build tools manually:**  
-This section assumes you have a working version of `go` and `git` already setup. You may want to build this way if your environment restricts installing additional software, or if you're integrating IPFS into your own build system.  
-[Minimal→](#minimal)  
+**Using build tools manually:**
+This section assumes you have a working version of `go` and `git` already setup. You may want to build this way if your environment restricts installing additional software, or if you're integrating IPFS into your own build system.
+[Minimal→](#minimal)
 
 ## MSYS2
-1. Install msys2 (http://www.msys2.org)  
-2. Run the following inside a normal `cmd` prompt (Not the MSYS2 prompt, we only need MSYS2's tools).  
+1. Install msys2 (http://www.msys2.org)
+2. Run the following inside a normal `cmd` prompt (Not the MSYS2 prompt, we only need MSYS2's tools).
 An explanation of this block is below.
 ```
 SET PATH=%PATH%;\msys64\usr\bin
@@ -35,7 +35,7 @@ make install
 %GOPATH%\bin\ipfs.exe version --all
 ```
 
-If there were no errors, the final command should output version information similar to "`ipfs version 0.4.14-dev-XXXXXXX`" where "XXXXXXX" should match the current short-hash of the `kubo` repo. You can retrieve said hash via this command: `git rev-parse --short HEAD`.  
+If there were no errors, the final command should output version information similar to "`ipfs version 0.4.14-dev-XXXXXXX`" where "XXXXXXX" should match the current short-hash of the `kubo` repo. You can retrieve said hash via this command: `git rev-parse --short HEAD`.
 If `ipfs.exe` executes and the version string matches, then building was successful.
 
 |Command|Explanation|
@@ -60,7 +60,7 @@ SETX PATH %PATH%
 ```
 
 ## Cygwin
-1. Install Cygwin (https://www.cygwin.com)  
+1. Install Cygwin (https://www.cygwin.com)
 2. During the install, select the following packages. (If you already have Cygwin installed, run the setup file again to install additional packages.) A fresh install should look something like [this reference image](https://ipfs.io/ipfs/QmaYFSQa4iHDafcebiKjm1WwuKhosoXr45HPpfaeMbCRpb/cygwin%20-%20install.png).
     - devel packages
         - `git`
@@ -68,8 +68,8 @@ SETX PATH %PATH%
     - archive packages
         - `unzip`
     - net packages
-        - `curl`  
-3. Run the following inside a normal `cmd` prompt (Not the Cygwin prompt, we only need Cygwin's tools)  
+        - `curl`
+3. Run the following inside a normal `cmd` prompt (Not the Cygwin prompt, we only need Cygwin's tools)
 An explanation of this block is below.
 ```
 SET PATH=%PATH%;\cygwin64\bin
@@ -81,7 +81,7 @@ make install
 %GOPATH%\bin\ipfs.exe version --all
 ```
 
-If there were no errors, the final command should output version information similar  to "`ipfs version 0.4.14-dev-XXXXXXX`" where "XXXXXXX" should match the current short-hash of the `kubo` repo. You can retrieve said hash via this command: `git rev-parse --short HEAD`.  
+If there were no errors, the final command should output version information similar  to "`ipfs version 0.4.14-dev-XXXXXXX`" where "XXXXXXX" should match the current short-hash of the `kubo` repo. You can retrieve said hash via this command: `git rev-parse --short HEAD`.
 If `ipfs.exe` executes and the version string matches, then building was successful.
 
 |Command|Explanation|
@@ -117,18 +117,18 @@ Clone and change directory to the source code, if you haven't already:
 CMD:
 ```bat
 git clone https://github.com/ipfs/kubo %GOPATH%/src/github.com/ipfs/kubo
-cd %GOPATH%/src/github.com/ipfs/kubo/cmd/ipfs
+cd %GOPATH%/src/github.com/jmfrank63/kubo/cmd/ipfs
 ```
 
 PowerShell:
 ```powershell
 git clone https://github.com/ipfs/kubo $env:GOPATH/src/github.com/ipfs/kubo
-cd $env:GOPATH/src/github.com/ipfs/kubo/cmd/ipfs
+cd $env:GOPATH/src/github.com/jmfrank63/kubo/cmd/ipfs
 ```
 
-We need the `git` commit hash to be included in our build so that in the extremely rare event a bug is found, we have a reference point later for tracking it. We'll ask `git` for it and store it in a variable. The syntax for the next command is different depending on whether you're using the interactive command line or writing a batch file. Use the one that applies to you.  
-- interactive: `FOR /F %V IN ('git rev-parse --short HEAD') do set SHA=%V`  
-- interpreter: `FOR /F %%V IN ('git rev-parse --short HEAD') do set SHA=%%V`  
+We need the `git` commit hash to be included in our build so that in the extremely rare event a bug is found, we have a reference point later for tracking it. We'll ask `git` for it and store it in a variable. The syntax for the next command is different depending on whether you're using the interactive command line or writing a batch file. Use the one that applies to you.
+- interactive: `FOR /F %V IN ('git rev-parse --short HEAD') do set SHA=%V`
+- interpreter: `FOR /F %%V IN ('git rev-parse --short HEAD') do set SHA=%%V`
 
 Finally, we'll build and test `ipfs` itself.
 
@@ -144,15 +144,15 @@ go install -ldflags="-X "github.com/ipfs/kubo".CurrentCommit=$env:SHA"
 cp ./ipfs.exe $env:GOPATH/bin/ipfs.exe -force
 . $env:GOPATH/bin/ipfs.exe version --all
 ```
-You can check that the ipfs output versions match with `go version` and `git rev-parse --short HEAD`.  
+You can check that the ipfs output versions match with `go version` and `git rev-parse --short HEAD`.
 If `ipfs.exe` executes and everything matches, then building was successful.
 
 ## Troubleshooting
 - **Git auth**
-If you get authentication problems with Git, you might want to take a look at https://help.github.com/articles/caching-your-github-password-in-git/ and use the suggested solution:  
+If you get authentication problems with Git, you might want to take a look at https://help.github.com/articles/caching-your-github-password-in-git/ and use the suggested solution:
 `git config --global credential.helper wincred`
 
-- **Anything else**  
+- **Anything else**
 Please search [https://discuss.ipfs.io](https://discuss.ipfs.io/search?q=windows%20category%3A13) for any additional issues you may encounter. If you can't find any existing resolution, feel free to post a question asking for help.
 
-If you encounter a bug with `kubo` itself (not related to building) please use the [issue tracker](https://github.com/ipfs/kubo/issues) to report it.
+If you encounter a bug with `kubo` itself (not related to building) please use the [issue tracker](https://github.com/jmfrank63/kubo/issues) to report it.

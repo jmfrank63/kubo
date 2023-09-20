@@ -17,9 +17,9 @@ import (
 	"github.com/multiformats/go-multiaddr"
 	"go.uber.org/fx"
 
-	"github.com/ipfs/kubo/config"
-	"github.com/ipfs/kubo/core/node/helpers"
-	"github.com/ipfs/kubo/repo"
+	"github.com/jmfrank63/kubo/config"
+	"github.com/jmfrank63/kubo/core/node/helpers"
+	"github.com/jmfrank63/kubo/repo"
 )
 
 var rcmgrLogger = logging.Logger("rcmgr")
@@ -460,7 +460,7 @@ func ensureConnMgrMakeSenseVsResourceMgr(concreteLimits rcmgr.ConcreteLimitConfi
 		return fmt.Errorf(`
 Unable to initialize libp2p due to conflicting resource manager limit configuration.
 resource manager System.Conns (%d) must be bigger than ConnMgr.HighWater (%d)
-See: https://github.com/ipfs/kubo/blob/master/docs/libp2p-resource-management.md#how-does-the-resource-manager-resourcemgr-relate-to-the-connection-manager-connmgr
+See: https://github.com/jmfrank63/kubo/blob/master/docs/libp2p-resource-management.md#how-does-the-resource-manager-resourcemgr-relate-to-the-connection-manager-connmgr
 `, rcm.System.Conns, highWater)
 	}
 	if (rcm.System.ConnsInbound > rcmgr.DefaultLimit || rcm.System.ConnsInbound == rcmgr.BlockAllLimit) && int64(rcm.System.ConnsInbound) <= highWater {
@@ -468,7 +468,7 @@ See: https://github.com/ipfs/kubo/blob/master/docs/libp2p-resource-management.md
 		return fmt.Errorf(`
 Unable to initialize libp2p due to conflicting resource manager limit configuration.
 resource manager System.ConnsInbound (%d) must be bigger than ConnMgr.HighWater (%d)
-See: https://github.com/ipfs/kubo/blob/master/docs/libp2p-resource-management.md#how-does-the-resource-manager-resourcemgr-relate-to-the-connection-manager-connmgr
+See: https://github.com/jmfrank63/kubo/blob/master/docs/libp2p-resource-management.md#how-does-the-resource-manager-resourcemgr-relate-to-the-connection-manager-connmgr
 `, rcm.System.ConnsInbound, highWater)
 	}
 	if rcm.System.Streams > rcmgr.DefaultLimit || rcm.System.Streams == rcmgr.BlockAllLimit && int64(rcm.System.Streams) <= highWater {
@@ -476,7 +476,7 @@ See: https://github.com/ipfs/kubo/blob/master/docs/libp2p-resource-management.md
 		return fmt.Errorf(`
 Unable to initialize libp2p due to conflicting resource manager limit configuration.
 resource manager System.Streams (%d) must be bigger than ConnMgr.HighWater (%d)
-See: https://github.com/ipfs/kubo/blob/master/docs/libp2p-resource-management.md#how-does-the-resource-manager-resourcemgr-relate-to-the-connection-manager-connmgr
+See: https://github.com/jmfrank63/kubo/blob/master/docs/libp2p-resource-management.md#how-does-the-resource-manager-resourcemgr-relate-to-the-connection-manager-connmgr
 `, rcm.System.Streams, highWater)
 	}
 	if (rcm.System.StreamsInbound > rcmgr.DefaultLimit || rcm.System.StreamsInbound == rcmgr.BlockAllLimit) && int64(rcm.System.StreamsInbound) <= highWater {
@@ -484,7 +484,7 @@ See: https://github.com/ipfs/kubo/blob/master/docs/libp2p-resource-management.md
 		return fmt.Errorf(`
 Unable to initialize libp2p due to conflicting resource manager limit configuration.
 resource manager System.StreamsInbound (%d) must be bigger than ConnMgr.HighWater (%d)
-See: https://github.com/ipfs/kubo/blob/master/docs/libp2p-resource-management.md#how-does-the-resource-manager-resourcemgr-relate-to-the-connection-manager-connmgr
+See: https://github.com/jmfrank63/kubo/blob/master/docs/libp2p-resource-management.md#how-does-the-resource-manager-resourcemgr-relate-to-the-connection-manager-connmgr
 `, rcm.System.StreamsInbound, highWater)
 	}
 	return nil

@@ -12,7 +12,7 @@ import (
 	ipns_pb "github.com/ipfs/boxo/ipns/pb"
 	"github.com/ipfs/boxo/path"
 	cmds "github.com/ipfs/go-ipfs-cmds"
-	cmdenv "github.com/ipfs/kubo/core/commands/cmdenv"
+	cmdenv "github.com/jmfrank63/kubo/core/commands/cmdenv"
 	"google.golang.org/protobuf/proto"
 )
 

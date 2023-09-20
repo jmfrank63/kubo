@@ -74,39 +74,39 @@ Within these scopes, limits are set on:
 Limits are set based on the `Swarm.ResourceMgr.MaxMemory` and `Swarm.ResourceMgr.MaxFileDescriptors` inputs above.
 
 There are also some special cases where minimum values are enforced.
-For example, Kubo maintainers have found in practice that it's a footgun to have too low of a value for `System.ConnsInbound` and a default minimum is used. (See [core/node/libp2p/rcmgr_defaults.go](https://github.com/ipfs/kubo/blob/master/core/node/libp2p/rcmgr_defaults.go) for specifics.)
+For example, Kubo maintainers have found in practice that it's a footgun to have too low of a value for `System.ConnsInbound` and a default minimum is used. (See [core/node/libp2p/rcmgr_defaults.go](https://github.com/jmfrank63/kubo/blob/master/core/node/libp2p/rcmgr_defaults.go) for specifics.)
 
 We trust this node to behave properly and thus don't limit *outbound* connection/stream limits.
 We apply any limits that libp2p has for its protocols/services
 since we assume libp2p knows best here.
 
-Source: [core/node/libp2p/rcmgr_defaults.go](https://github.com/ipfs/kubo/blob/master/core/node/libp2p/rcmgr_defaults.go)
+Source: [core/node/libp2p/rcmgr_defaults.go](https://github.com/jmfrank63/kubo/blob/master/core/node/libp2p/rcmgr_defaults.go)
 
 ### User Supplied Override Limits
 A user who wants fine control over the limits used by the go-libp2p resoure manager can specify overrides to the [computed default limits](#computed-default-limits).
 This is done by defining limits in ``$IPFS_PATH/libp2p-resource-limit-overrides.json``.
 These values trump anything else and are parsed directly by go-libp2p.
-(See the [go-libp2p Resource Manager README](https://github.com/libp2p/go-libp2p/blob/master/p2p/host/resource-manager/README.md) for formatting.) 
+(See the [go-libp2p Resource Manager README](https://github.com/libp2p/go-libp2p/blob/master/p2p/host/resource-manager/README.md) for formatting.)
 
 ## FAQ
 
 ### What do these "Protected from exceeding resource limits" log messages mean?
-"Protected from exceeding resource limits" log messages denote that the resource manager is working and that it prevented additional resources being used beyond the set limits.  Per [libp2p code](https://github.com/libp2p/go-libp2p/blob/master/p2p/host/resource-manager/scope.go), these messages take the form of "$scope: cannot reserve $limitKey".  
+"Protected from exceeding resource limits" log messages denote that the resource manager is working and that it prevented additional resources being used beyond the set limits.  Per [libp2p code](https://github.com/libp2p/go-libp2p/blob/master/p2p/host/resource-manager/scope.go), these messages take the form of "$scope: cannot reserve $limitKey".
 
 As an example:
 
 > Protected from exceeding resource limits 2 times: "system: cannot reserve inbound connection: resource limit exceeded"
 
-This means that there were 2 recent occurrences where the libp2p resource manager prevented an inbound connection at the "system" [scope](https://github.com/libp2p/go-libp2p/tree/master/p2p/host/resource-manager#resource-scopes).  
-Specificaly the ``System.ConnsInbound`` limit was hit.  
+This means that there were 2 recent occurrences where the libp2p resource manager prevented an inbound connection at the "system" [scope](https://github.com/libp2p/go-libp2p/tree/master/p2p/host/resource-manager#resource-scopes).
+Specificaly the ``System.ConnsInbound`` limit was hit.
 
 This can be analyzed by viewing the limit and current usage with `ipfs swarm resources`.
 `System.ConnsInbound` is likely close or at the limit value.
 
-The simplest way to identify all resources across all scopes that are close to exceeding their limit (>90% usage) is with a command like `ipfs swarm resources | egrep "9.\..%"` 
+The simplest way to identify all resources across all scopes that are close to exceeding their limit (>90% usage) is with a command like `ipfs swarm resources | egrep "9.\..%"`
 
 Sources:
-* [kubo resource manager logging](https://github.com/ipfs/kubo/blob/master/core/node/libp2p/rcmgr_logging.go)
+* [kubo resource manager logging](https://github.com/jmfrank63/kubo/blob/master/core/node/libp2p/rcmgr_logging.go)
 * [libp2p resource manager messages](https://github.com/libp2p/go-libp2p/blob/master/p2p/host/resource-manager/scope.go)
 
 ### How does one see the Active Limits?
@@ -118,9 +118,9 @@ This can be observed [seeing the active limits](#how-does-one-see-the-active-lim
 
 ### How does one monitor libp2p resource usage?
 
-For [monitoring libp2p resource usage](https://github.com/libp2p/go-libp2p/tree/master/p2p/host/resource-manager#monitoring), 
-various `*rcmgr_*` metrics can be accessed as the Prometheus endpoint at `{Addresses.API}/debug/metrics/prometheus` (default: `http://127.0.0.1:5001/debug/metrics/prometheus`).  
-There are also [pre-built Grafana dashboards](https://github.com/libp2p/go-libp2p/tree/master/p2p/host/resource-manager/obs/grafana-dashboards) that can be added to a Grafana instance. 
+For [monitoring libp2p resource usage](https://github.com/libp2p/go-libp2p/tree/master/p2p/host/resource-manager#monitoring),
+various `*rcmgr_*` metrics can be accessed as the Prometheus endpoint at `{Addresses.API}/debug/metrics/prometheus` (default: `http://127.0.0.1:5001/debug/metrics/prometheus`).
+There are also [pre-built Grafana dashboards](https://github.com/libp2p/go-libp2p/tree/master/p2p/host/resource-manager/obs/grafana-dashboards) that can be added to a Grafana instance.
 
 A textual view of current resource usage and a list of services, protocols, and peers can be
 obtained via `ipfs swarm stats --help`
@@ -140,10 +140,10 @@ To ensure the ConnMgr and ResourceMgr are congruent, the ResourceMgr [computed d
 1. `System.ConnsInbound` >= `max(Swarm.ConnMgr.HighWater * 2, DefaultResourceMgrMinInboundConns)` AND
 2. `System.StreamsInbound` is greater than any new/adjusted `Swarm.ResourceMgr.Limits.System.ConnsInbound` value so that there's enough streams per connection.
 
-Source: [core/node/libp2p/rcmgr_defaults.go](https://github.com/ipfs/kubo/blob/master/core/node/libp2p/rcmgr_defaults.go)
+Source: [core/node/libp2p/rcmgr_defaults.go](https://github.com/jmfrank63/kubo/blob/master/core/node/libp2p/rcmgr_defaults.go)
 
 ### What are the "Application error 0x0 (remote) ... cannot reserve ..." messages?
-These are messages coming from old (pre go-libp2p 0.26) *remote* go-libp2p peers (likely another older Kubo node) with the resource manager enabled on why it failed to establish a connection.  
+These are messages coming from old (pre go-libp2p 0.26) *remote* go-libp2p peers (likely another older Kubo node) with the resource manager enabled on why it failed to establish a connection.
 
 This can be confusing, but these `Application error 0x0 (remote) ... cannot reserve ...` messages can occur even if your local node has the resource manager disabled.
 

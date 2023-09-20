@@ -3,7 +3,7 @@ package integrationtest
 import (
 	"testing"
 
-	"github.com/ipfs/kubo/thirdparty/unit"
+	"github.com/jmfrank63/kubo/thirdparty/unit"
 	testutil "github.com/libp2p/go-libp2p-testing/net"
 )
 

@@ -9,7 +9,7 @@ import (
 	keystore "github.com/ipfs/boxo/keystore"
 	rcmgr "github.com/libp2p/go-libp2p/p2p/host/resource-manager"
 
-	config "github.com/ipfs/kubo/config"
+	config "github.com/jmfrank63/kubo/config"
 	ma "github.com/multiformats/go-multiaddr"
 )
 

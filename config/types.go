@@ -446,7 +446,7 @@ func (swarmLimits) UnmarshalJSON(b []byte) error {
 				continue
 			}
 			//nolint
-			return fmt.Errorf("The Swarm.ResourceMgr.Limits configuration has been removed in Kubo 0.19 and should be empty or not present. To set custom libp2p limits, read https://github.com/ipfs/kubo/blob/master/docs/libp2p-resource-management.md#user-supplied-override-limits")
+			return fmt.Errorf("The Swarm.ResourceMgr.Limits configuration has been removed in Kubo 0.19 and should be empty or not present. To set custom libp2p limits, read https://github.com/jmfrank63/kubo/blob/master/docs/libp2p-resource-management.md#user-supplied-override-limits")
 		default:
 			return err
 		}
