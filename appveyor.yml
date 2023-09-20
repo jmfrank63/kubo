@@ -15,7 +15,7 @@ environment:
   TEST_VERBOSE: 1
   #TEST_NO_FUSE: 1
   #TEST_SUITE: test_sharness
-  #GOFLAGS: -tags nofuse
+  GOFLAGS: -tags nofuse
   global:
     BASH: C:\cygwin\bin\bash
   matrix:
