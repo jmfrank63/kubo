@@ -1,4 +1,4 @@
-package handshake
+package server
 
 import (
 	"fmt"
@@ -9,35 +9,35 @@ import (
 
 // Plugins is exported list of plugins that will be loaded.
 var Plugins = []plugin.Plugin{
-	&handshakePlugin{},
+	&serverPlugin{},
 }
 
-type handshakePlugin struct{}
+type serverPlugin struct{}
 
-var _ plugin.PluginDaemon = (*handshakePlugin)(nil)
+var _ plugin.PluginDaemon = (*serverPlugin)(nil)
 
 // Name returns the plugin's name, satisfying the plugin.Plugin interface.
-func (*handshakePlugin) Name() string {
-	return "handshake"
+func (*serverPlugin) Name() string {
+	return "server"
 }
 
 // Version returns the plugin's version, satisfying the plugin.Plugin interface.
-func (*handshakePlugin) Version() string {
+func (*serverPlugin) Version() string {
 	return "0.1.0"
 }
 
 // Init initializes plugin, satisfying the plugin.Plugin interface. Put any
 // initialization logic here.
-func (*handshakePlugin) Init(env *plugin.Environment) error {
+func (*serverPlugin) Init(env *plugin.Environment) error {
 	return nil
 }
 
-func (*handshakePlugin) Start(_ coreiface.CoreAPI) error {
-	fmt.Println("Hello!")
+func (*serverPlugin) Start(_ coreiface.CoreAPI) error {
+	fmt.Println("Hello from Server!")
 	return nil
 }
 
-func (*handshakePlugin) Close() error {
-	fmt.Println("Goodbye!")
+func (*serverPlugin) Close() error {
+	fmt.Println("Goodbye from Server!")
 	return nil
 }

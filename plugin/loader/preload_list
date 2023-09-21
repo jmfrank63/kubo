@@ -5,10 +5,10 @@
 
 ipldgit github.com/ipfs/kubo/plugin/plugins/git *
 iplddagjose github.com/ipfs/kubo/plugin/plugins/dagjose *
-
 badgerds github.com/ipfs/kubo/plugin/plugins/badgerds *
 flatfs github.com/ipfs/kubo/plugin/plugins/flatfs *
 levelds github.com/ipfs/kubo/plugin/plugins/levelds *
 peerlog github.com/ipfs/kubo/plugin/plugins/peerlog *
 fxtest github.com/ipfs/kubo/plugin/plugins/fxtest *
-handshake github.com/ipfs/kubo/plugin/plugins/handshake *
+client github.com/ipfs/kubo/plugin/plugins/client *
+server github.com/ipfs/kubo/plugin/plugins/server *
