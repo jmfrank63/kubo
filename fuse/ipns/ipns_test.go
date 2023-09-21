@@ -15,8 +15,8 @@ import (
 
 	"bazil.org/fuse"
 
-	core "github.com/jmfrank63/kubo/core"
-	coreapi "github.com/jmfrank63/kubo/core/coreapi"
+	core "github.com/ipfs/kubo/core"
+	coreapi "github.com/ipfs/kubo/core/coreapi"
 
 	fstest "bazil.org/fuse/fs/fstestutil"
 	u "github.com/ipfs/boxo/util"

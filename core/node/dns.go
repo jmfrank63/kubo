@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/ipfs/boxo/gateway"
-	config "github.com/jmfrank63/kubo/config"
+	config "github.com/ipfs/kubo/config"
 	doh "github.com/libp2p/go-doh-resolver"
 	madns "github.com/multiformats/go-multiaddr-dns"
 )

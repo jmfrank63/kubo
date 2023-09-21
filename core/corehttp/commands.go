@@ -12,11 +12,11 @@ import (
 	path "github.com/ipfs/boxo/path"
 	cmds "github.com/ipfs/go-ipfs-cmds"
 	cmdsHttp "github.com/ipfs/go-ipfs-cmds/http"
-	version "github.com/jmfrank63/kubo"
-	oldcmds "github.com/jmfrank63/kubo/commands"
-	config "github.com/jmfrank63/kubo/config"
-	"github.com/jmfrank63/kubo/core"
-	corecommands "github.com/jmfrank63/kubo/core/commands"
+	version "github.com/ipfs/kubo"
+	oldcmds "github.com/ipfs/kubo/commands"
+	config "github.com/ipfs/kubo/config"
+	"github.com/ipfs/kubo/core"
+	corecommands "github.com/ipfs/kubo/core/commands"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 

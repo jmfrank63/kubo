@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	core "github.com/jmfrank63/kubo/core"
+	core "github.com/ipfs/kubo/core"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/zpages"
 

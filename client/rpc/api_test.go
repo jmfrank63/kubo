@@ -14,7 +14,7 @@ import (
 	iface "github.com/ipfs/boxo/coreiface"
 	"github.com/ipfs/boxo/coreiface/path"
 	"github.com/ipfs/boxo/coreiface/tests"
-	"github.com/jmfrank63/kubo/test/cli/harness"
+	"github.com/ipfs/kubo/test/cli/harness"
 	ma "github.com/multiformats/go-multiaddr"
 	"go.uber.org/multierr"
 )

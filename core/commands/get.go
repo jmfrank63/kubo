@@ -11,8 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/jmfrank63/kubo/core/commands/cmdenv"
-	"github.com/jmfrank63/kubo/core/commands/e"
+	"github.com/ipfs/kubo/core/commands/cmdenv"
+	"github.com/ipfs/kubo/core/commands/e"
 
 	"github.com/cheggaaa/pb"
 	"github.com/ipfs/boxo/coreiface/path"

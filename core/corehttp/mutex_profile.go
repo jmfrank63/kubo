@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"strconv"
 
-	core "github.com/jmfrank63/kubo/core"
+	core "github.com/ipfs/kubo/core"
 )
 
 // MutexFractionOption allows to set runtime.SetMutexProfileFraction via HTTP

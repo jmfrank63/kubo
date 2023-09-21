@@ -10,9 +10,9 @@ import (
 	"text/tabwriter"
 	"time"
 
-	core "github.com/jmfrank63/kubo/core"
-	cmdenv "github.com/jmfrank63/kubo/core/commands/cmdenv"
-	p2p "github.com/jmfrank63/kubo/p2p"
+	core "github.com/ipfs/kubo/core"
+	cmdenv "github.com/ipfs/kubo/core/commands/cmdenv"
+	p2p "github.com/ipfs/kubo/p2p"
 
 	cmds "github.com/ipfs/go-ipfs-cmds"
 	peer "github.com/libp2p/go-libp2p/core/peer"

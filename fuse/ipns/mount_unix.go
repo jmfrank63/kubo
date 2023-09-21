@@ -5,9 +5,9 @@
 package ipns
 
 import (
-	core "github.com/jmfrank63/kubo/core"
-	coreapi "github.com/jmfrank63/kubo/core/coreapi"
-	mount "github.com/jmfrank63/kubo/fuse/mount"
+	core "github.com/ipfs/kubo/core"
+	coreapi "github.com/ipfs/kubo/core/coreapi"
+	mount "github.com/ipfs/kubo/fuse/mount"
 )
 
 // Mount mounts ipns at a given location, and returns a mount.Mount instance.

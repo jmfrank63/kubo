@@ -15,12 +15,12 @@ import (
 	"github.com/ipfs/boxo/coreiface/options"
 	ipath "github.com/ipfs/boxo/coreiface/path"
 	"github.com/ipfs/boxo/files"
-	"github.com/jmfrank63/kubo/config"
-	"github.com/jmfrank63/kubo/core"
-	"github.com/jmfrank63/kubo/core/coreapi"
-	"github.com/jmfrank63/kubo/core/node/libp2p"
-	"github.com/jmfrank63/kubo/repo/fsrepo"
-	"github.com/jmfrank63/kubo/repo/fsrepo/migrations"
+	"github.com/ipfs/kubo/config"
+	"github.com/ipfs/kubo/core"
+	"github.com/ipfs/kubo/core/coreapi"
+	"github.com/ipfs/kubo/core/node/libp2p"
+	"github.com/ipfs/kubo/repo/fsrepo"
+	"github.com/ipfs/kubo/repo/fsrepo/migrations"
 	peer "github.com/libp2p/go-libp2p/core/peer"
 )
 

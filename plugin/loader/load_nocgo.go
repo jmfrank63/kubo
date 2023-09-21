@@ -8,7 +8,7 @@ package loader
 import (
 	"errors"
 
-	iplugin "github.com/jmfrank63/kubo/plugin"
+	iplugin "github.com/ipfs/kubo/plugin"
 )
 
 func init() {

@@ -8,7 +8,7 @@ import (
 	"io"
 	"time"
 
-	cmdenv "github.com/jmfrank63/kubo/core/commands/cmdenv"
+	cmdenv "github.com/ipfs/kubo/core/commands/cmdenv"
 
 	iface "github.com/ipfs/boxo/coreiface"
 	"github.com/ipfs/boxo/coreiface/options"

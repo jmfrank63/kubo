@@ -25,7 +25,7 @@ import (
 	ipld "github.com/ipfs/go-ipld-format"
 	logging "github.com/ipfs/go-log"
 
-	"github.com/jmfrank63/kubo/tracing"
+	"github.com/ipfs/kubo/tracing"
 )
 
 var log = logging.Logger("coreunix")

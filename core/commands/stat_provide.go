@@ -9,7 +9,7 @@ import (
 	humanize "github.com/dustin/go-humanize"
 	"github.com/ipfs/boxo/provider"
 	cmds "github.com/ipfs/go-ipfs-cmds"
-	"github.com/jmfrank63/kubo/core/commands/cmdenv"
+	"github.com/ipfs/kubo/core/commands/cmdenv"
 	"golang.org/x/exp/constraints"
 )
 

@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/jmfrank63/kubo/commands"
-	"github.com/jmfrank63/kubo/core"
+	"github.com/ipfs/kubo/commands"
+	"github.com/ipfs/kubo/core"
 
 	coreiface "github.com/ipfs/boxo/coreiface"
 	options "github.com/ipfs/boxo/coreiface/options"

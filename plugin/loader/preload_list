@@ -3,12 +3,12 @@
 #
 # name             go-path                  number of the sub-plugin or *
 
-ipldgit github.com/jmfrank63/kubo/plugin/plugins/git *
-iplddagjose github.com/jmfrank63/kubo/plugin/plugins/dagjose *
+ipldgit github.com/ipfs/kubo/plugin/plugins/git *
+iplddagjose github.com/ipfs/kubo/plugin/plugins/dagjose *
 
-badgerds github.com/jmfrank63/kubo/plugin/plugins/badgerds *
-flatfs github.com/jmfrank63/kubo/plugin/plugins/flatfs *
-levelds github.com/jmfrank63/kubo/plugin/plugins/levelds *
-peerlog github.com/jmfrank63/kubo/plugin/plugins/peerlog *
-fxtest github.com/jmfrank63/kubo/plugin/plugins/fxtest *
-handshake github.com/jmfrank63/kubo/plugin/plugins/handshake *
+badgerds github.com/ipfs/kubo/plugin/plugins/badgerds *
+flatfs github.com/ipfs/kubo/plugin/plugins/flatfs *
+levelds github.com/ipfs/kubo/plugin/plugins/levelds *
+peerlog github.com/ipfs/kubo/plugin/plugins/peerlog *
+fxtest github.com/ipfs/kubo/plugin/plugins/fxtest *
+handshake github.com/ipfs/kubo/plugin/plugins/handshake *

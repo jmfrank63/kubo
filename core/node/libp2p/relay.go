@@ -3,7 +3,7 @@ package libp2p
 import (
 	"context"
 
-	"github.com/jmfrank63/kubo/config"
+	"github.com/ipfs/kubo/config"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/p2p/host/autorelay"

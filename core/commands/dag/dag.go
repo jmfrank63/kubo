@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/jmfrank63/kubo/core/commands/cmdenv"
-	"github.com/jmfrank63/kubo/core/commands/cmdutils"
+	"github.com/ipfs/kubo/core/commands/cmdenv"
+	"github.com/ipfs/kubo/core/commands/cmdutils"
 
 	ipfspath "github.com/ipfs/boxo/path"
 	cid "github.com/ipfs/go-cid"

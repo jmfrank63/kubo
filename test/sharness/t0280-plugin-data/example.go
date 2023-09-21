@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jmfrank63/kubo/plugin"
+	"github.com/ipfs/kubo/plugin"
 )
 
 var Plugins = []plugin.Plugin{

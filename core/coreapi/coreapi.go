@@ -41,9 +41,9 @@ import (
 	madns "github.com/multiformats/go-multiaddr-dns"
 
 	"github.com/ipfs/boxo/namesys"
-	"github.com/jmfrank63/kubo/core"
-	"github.com/jmfrank63/kubo/core/node"
-	"github.com/jmfrank63/kubo/repo"
+	"github.com/ipfs/kubo/core"
+	"github.com/ipfs/kubo/core/node"
+	"github.com/ipfs/kubo/repo"
 )
 
 type CoreAPI struct {

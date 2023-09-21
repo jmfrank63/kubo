@@ -13,7 +13,7 @@ import (
 	dag "github.com/ipfs/boxo/ipld/merkledag"
 	cid "github.com/ipfs/go-cid"
 	cidutil "github.com/ipfs/go-cidutil"
-	"github.com/jmfrank63/kubo/tracing"
+	"github.com/ipfs/kubo/tracing"
 	peer "github.com/libp2p/go-libp2p/core/peer"
 	routing "github.com/libp2p/go-libp2p/core/routing"
 	"go.opentelemetry.io/otel/attribute"

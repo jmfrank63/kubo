@@ -4,7 +4,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/jmfrank63/kubo/test/cli/testutils"
+	"github.com/ipfs/kubo/test/cli/testutils"
 )
 
 // Buffer is a thread-safe byte buffer.

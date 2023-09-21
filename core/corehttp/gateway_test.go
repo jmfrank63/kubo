@@ -10,10 +10,10 @@ import (
 	"testing"
 
 	"github.com/ipfs/boxo/namesys"
-	version "github.com/jmfrank63/kubo"
-	"github.com/jmfrank63/kubo/core"
-	"github.com/jmfrank63/kubo/core/coreapi"
-	"github.com/jmfrank63/kubo/repo"
+	version "github.com/ipfs/kubo"
+	"github.com/ipfs/kubo/core"
+	"github.com/ipfs/kubo/core/coreapi"
+	"github.com/ipfs/kubo/repo"
 	"github.com/stretchr/testify/assert"
 
 	iface "github.com/ipfs/boxo/coreiface"
@@ -21,7 +21,7 @@ import (
 	"github.com/ipfs/boxo/path"
 	"github.com/ipfs/go-datastore"
 	syncds "github.com/ipfs/go-datastore/sync"
-	"github.com/jmfrank63/kubo/config"
+	"github.com/ipfs/kubo/config"
 	ci "github.com/libp2p/go-libp2p/core/crypto"
 )
 

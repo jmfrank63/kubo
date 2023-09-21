@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/jmfrank63/kubo/test/cli/harness"
-	. "github.com/jmfrank63/kubo/test/cli/testutils"
+	"github.com/ipfs/kubo/test/cli/harness"
+	. "github.com/ipfs/kubo/test/cli/testutils"
 	pb "github.com/libp2p/go-libp2p/core/crypto/pb"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/stretchr/testify/assert"

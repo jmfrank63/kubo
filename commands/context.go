@@ -6,15 +6,15 @@ import (
 	"strings"
 	"time"
 
-	core "github.com/jmfrank63/kubo/core"
-	coreapi "github.com/jmfrank63/kubo/core/coreapi"
-	loader "github.com/jmfrank63/kubo/plugin/loader"
+	core "github.com/ipfs/kubo/core"
+	coreapi "github.com/ipfs/kubo/core/coreapi"
+	loader "github.com/ipfs/kubo/plugin/loader"
 
 	coreiface "github.com/ipfs/boxo/coreiface"
 	options "github.com/ipfs/boxo/coreiface/options"
 	cmds "github.com/ipfs/go-ipfs-cmds"
 	logging "github.com/ipfs/go-log"
-	config "github.com/jmfrank63/kubo/config"
+	config "github.com/ipfs/kubo/config"
 )
 
 var log = logging.Logger("command")

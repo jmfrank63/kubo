@@ -5,7 +5,7 @@ import (
 	"runtime"
 	"testing"
 
-	config "github.com/jmfrank63/kubo/config"
+	config "github.com/ipfs/kubo/config"
 )
 
 func TestConfig(t *testing.T) {

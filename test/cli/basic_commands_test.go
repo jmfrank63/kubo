@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/blang/semver/v4"
-	"github.com/jmfrank63/kubo/test/cli/harness"
-	. "github.com/jmfrank63/kubo/test/cli/testutils"
+	"github.com/ipfs/kubo/test/cli/harness"
+	. "github.com/ipfs/kubo/test/cli/testutils"
 	"github.com/stretchr/testify/assert"
 	gomod "golang.org/x/mod/module"
 )
@@ -62,7 +62,7 @@ func TestIPFSVersionDeps(t *testing.T) {
 	res = strings.TrimSpace(res)
 	lines := SplitLines(res)
 
-	assert.Equal(t, "github.com/jmfrank63/kubo@(devel)", lines[0])
+	assert.Equal(t, "github.com/ipfs/kubo@(devel)", lines[0])
 
 	for _, depLine := range lines[1:] {
 		split := strings.Split(depLine, " => ")
