@@ -11,3 +11,4 @@ flatfs github.com/jmfrank63/kubo/plugin/plugins/flatfs *
 levelds github.com/jmfrank63/kubo/plugin/plugins/levelds *
 peerlog github.com/jmfrank63/kubo/plugin/plugins/peerlog *
 fxtest github.com/jmfrank63/kubo/plugin/plugins/fxtest *
+handshake github.com/jmfrank63/kubo/plugin/plugins/handshake *
