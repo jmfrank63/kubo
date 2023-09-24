@@ -1,12 +1,25 @@
-arch := `echo ${ARCHFLAGS} | cut -d ' ' -f 2`
-
 build:
-    docker build -t kubo-{{arch}}:master .
+    #!/usr/bin/env bash
+    arch=$(uname -m)
+    if [ "$arch" = "x86_64" ]; then
+        arch="amd64"
+    fi
+    docker build -t kubo-"$arch":master .
 
 tag:
-    docker tag kubo-{{arch}}:master jmfrank63/kubo-{{arch}}:master
+    #!/usr/bin/env bash
+    arch=$(uname -m)
+    if [ "$arch" = "x86_64" ]; then
+        arch="amd64"
+    fi
+    docker tag kubo-"$arch":master jmfrank63/kubo-"$arch":master
 
 push:
-    docker push jmfrank63/kubo-{{arch}}:master
+    #!/usr/bin/env bash
+    arch=$(uname -m)
+    if [ "$arch" = "x86_64" ]; then
+        arch="amd64"
+    fi
+    docker push jmfrank63/kubo-"$arch":master
 
 all: build tag push
