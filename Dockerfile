@@ -37,7 +37,8 @@ RUN set -eux; \
     # This installs fusermount which we later copy over to the target image.
     fuse \
     ca-certificates \
-	; \
+    libgcc1 \
+  ; \
 	rm -rf /var/lib/apt/lists/*
 
 # Now comes the actual target image, which aims to be as small as possible.
@@ -49,9 +50,11 @@ COPY --from=utilities /usr/sbin/gosu /sbin/gosu
 COPY --from=utilities /usr/bin/tini /sbin/tini
 COPY --from=utilities /bin/fusermount /usr/local/bin/fusermount
 COPY --from=utilities /etc/ssl/certs /etc/ssl/certs
+COPY --from=utilities /lib/aarch64-linux-gnu/libgcc_s.so.1 /lib/
 COPY --from=builder $SRC_DIR/cmd/ipfs/ipfs /usr/local/bin/ipfs
 COPY --from=builder $SRC_DIR/bin/container_daemon /usr/local/bin/start_ipfs
 COPY --from=builder $SRC_DIR/bin/container_init_run /usr/local/bin/container_init_run
+COPY --from=rustlib_builder /rustlib/target/aarch64-unknown-linux-gnu/release/libclient.so /usr/local/lib/libclient.so
 
 # Add suid bit on fusermount so it will run properly
 RUN chmod 4755 /usr/local/bin/fusermount
@@ -91,6 +94,8 @@ VOLUME $IPFS_PATH
 
 # The default logging level
 ENV IPFS_LOGGING ""
+
+ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
 # This just makes sure that:
 # 1. There's an fs-repo, and initializes one if there isn't.
