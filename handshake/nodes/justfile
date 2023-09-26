@@ -1,23 +1,23 @@
-stop-all:
+stop-all-nodes:
     cd server && just stop-all-server
     cd client && just stop-all-client
 
-remove-all:
+remove-all-nodes:
     cd server && just remove-all-server
     cd client && just remove-all-client
 
-start-all:
+start-all-nodes:
     cd server && just start-all-server
     cd client && just start-all-client
 
-restart-all:
+restart-all-nodes:
     cd server && just restart-all-server
     cd client && just restart-all-client
 
-renew-all:
+renew-all-nodes:
     cd server && just renew-all-server
     cd client && just renew-all-client
 
-run-all:
+run-all-nodes:
     cd server && just run-all-server
     cd client && just run-all-client

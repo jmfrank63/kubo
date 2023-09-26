@@ -1,26 +1,32 @@
+use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
-use std::ffi::CString;
-use tokio::net::{TcpListener};
-use tokio::io::AsyncWriteExt;
+
+#[repr(C)]
+pub struct Result {
+    pub data: *mut c_char,
+    pub error: *mut c_char,
+}
 
 #[no_mangle]
-pub extern "C" fn start_server() -> *mut c_char {
+pub extern "C" fn start_server() -> *mut Result {
     let rt = tokio::runtime::Runtime::new().unwrap();
 
-    // Use block_on to run an async function and wait for its result
-    let result = rt.block_on(async {
-        // Start a listener on a specific address and port
-        let listener = TcpListener::bind("0.0.0.0:5555").await.unwrap();
+    let result: Box<Result> = Box::new(rt.block_on(async {
+        let mut response = Result {
+            data: std::ptr::null_mut(),
+            error: std::ptr::null_mut(),
+        };
 
-        // Wait for a connection
-        if let Ok((mut socket, _)) = listener.accept().await {
-            // Send the "Server Started" message to the connected client
-            let _ = socket.write_all(b"Server Started").await;
-        }
+        // Simulate reading "Hello from Rust" from the stream
+        let simulated_msg = "Hello from Server Plugin in Rust!";
+        let buf = CString::new(simulated_msg).unwrap().into_bytes_with_nul().to_vec();
 
-        "Server Started and message sent!"
-    });
+        let received_msg = CStr::from_bytes_with_nul(&buf).unwrap_or_default();
+        response.data = CString::new(received_msg.to_str().unwrap_or_default())
+            .unwrap()
+            .into_raw();
+        response
+    }));
 
-    let s = CString::new(result).unwrap();
-    s.into_raw()
+    Box::into_raw(result)
 }

@@ -26,7 +26,7 @@ start-all:
     just --justfile handshake/client/justfile build
     just --justfile handshake/server/justfile build
     just push
-    just --justfile handshake/nodes/justfile renew-all
+    just --justfile handshake/nodes/justfile start-all-nodes
     just --justfile handshake/nodes/bridge/justfile start-bridge
 
 remove-all:
@@ -34,4 +34,11 @@ remove-all:
     just --justfile handshake/server/justfile clean || true
     just --justfile handshake/nodes/bridge/justfile stop-bridge
     just --justfile handshake/nodes/bridge/justfile remove-bridge
-    just --justfile handshake/nodes/justfile remove-all
+    just --justfile handshake/nodes/justfile remove-all-nodes
+
+renew-all: remove-all
+    just --justfile handshake/client/justfile build
+    just --justfile handshake/server/justfile build
+    just push
+    just --justfile handshake/nodes/justfile renew-all-nodes
+    just --justfile handshake/nodes/bridge/justfile start-bridge

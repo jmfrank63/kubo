@@ -43,9 +43,9 @@ func (*clientPlugin) Init(env *plugin.Environment) error {
 	return nil
 }
 
+// Start starts the plugin, satisfying the plugin.Plugin interface. Put any
+// start logic here.
 func (*clientPlugin) Start(_ coreiface.CoreAPI) error {
-    fmt.Println("Hello from Client Plugin in Go!")
-
     // Call the Rust function
     result := C.start_client()
 
@@ -68,6 +68,6 @@ func (*clientPlugin) Start(_ coreiface.CoreAPI) error {
 }
 
 func (*clientPlugin) Close() error {
-	fmt.Println("Goodbye from Client!")
+	fmt.Println("Goodbye from Client Plugin!")
 	return nil
 }
