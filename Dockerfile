@@ -38,6 +38,7 @@ RUN set -eux; \
     fuse \
     ca-certificates \
     libgcc1 \
+    curl \
   ; \
 	rm -rf /var/lib/apt/lists/*
 
@@ -50,7 +51,8 @@ COPY --from=utilities /usr/sbin/gosu /sbin/gosu
 COPY --from=utilities /usr/bin/tini /sbin/tini
 COPY --from=utilities /bin/fusermount /usr/local/bin/fusermount
 COPY --from=utilities /etc/ssl/certs /etc/ssl/certs
-COPY --from=utilities /lib/aarch64-linux-gnu/libgcc_s.so.1 /lib/
+COPY --from=utilities /usr/bin/curl /usr/bin/curl
+COPY --from=utilities /lib/aarch64-linux-gnu/*.so.* /lib/
 COPY --from=builder $SRC_DIR/cmd/ipfs/ipfs /usr/local/bin/ipfs
 COPY --from=builder $SRC_DIR/bin/container_daemon /usr/local/bin/start_ipfs
 COPY --from=builder $SRC_DIR/bin/container_init_run /usr/local/bin/container_init_run
