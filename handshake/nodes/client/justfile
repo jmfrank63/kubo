@@ -1,0 +1,72 @@
+# Create Docker network for IPFS client
+create-ipfs-client-network:
+    #!/usr/bin/env bash
+    docker network create --subnet=172.19.0.0/16 --gateway=172.19.0.1 ipfs_client_network || true
+
+# Run the IPFS client container
+run-ipfs-client:
+    #!/usr/bin/env bash
+        arch=$(uname -m)
+    if [ "$arch" = "x86_64" ]; then
+        arch="amd64"
+    fi
+    sleep 1
+    # Ensure that client_ipfs_staging and client_ipfs_data environment variables are set
+    export client_ipfs_data=${HOME}/Projects/Go/src/github.com/jmfrank63/kubo/handshake/tmp/client/data
+    export client_ipfs_staging=${HOME}/Projects/Go/src/github.com/jmfrank63/kubo/handshake/tmp/client/staging
+
+    docker run -d --name ipfs_client \
+      --network ipfs_client_network \
+      --ip 172.19.0.2 \
+      -e IPFS_SWARM_KEY_FILE=/keys/swarm.key \
+      -v $client_ipfs_staging:/export \
+      -v $client_ipfs_data:/data/ipfs \
+      -v ./init:/container-init.d \
+      -v ${HOME}/Projects/Go/src/github.com/jmfrank63/kubo/handshake/nodes/cars:/webui \
+      -v ${HOME}/Projects/Go/src/github.com/jmfrank63/kubo/handshake/keys:/keys \
+      -p 4002:4001 \
+      -p 4002:4001/udp \
+      -p 127.0.0.1:8081:8080 \
+      -p 127.0.0.1:5002:5002 \
+      -p 127.0.0.1:4444:4444 \
+      jmfrank63/kubo-"$arch":master
+
+# Run the IPFS client container
+start-ipfs-client:
+    #!/usr/bin/env bash
+    docker start ipfs_client || true
+
+# Stop the IPFS client container
+stop-ipfs-client:
+    #!/usr/bin/env bash
+    docker stop ipfs_client || true
+
+# Remove the IPFS client container
+remove-ipfs-client:
+    #!/usr/bin/env bash
+    docker rm ipfs_client || true
+    # rm -rf ${HOME}/Projects/Go/src/github.com/jmfrank63/kubo/handshake/client/data
+    # rm -rf ${HOME}/Projects/Go/src/github.com/jmfrank63/kubo/handshake/client/staging
+
+# Remove the IPFS client network
+remove-ipfs-client-network:
+    #!/usr/bin/env bash
+    docker network rm ipfs_client_network || true
+
+# Start all
+start-all-client: start-ipfs-client
+
+# Run all
+run-all-client: create-ipfs-client-network run-ipfs-client
+
+# Stop all
+stop-all-client: stop-ipfs-client
+
+# Remove all
+remove-all-client: stop-ipfs-client remove-ipfs-client remove-ipfs-client-network
+
+# Restart all
+restart-all-client: stop-all-client start-all-client
+
+# Renew all
+renew-all-client: remove-all-client run-all-client

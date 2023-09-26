@@ -1,0 +1,23 @@
+stop-all:
+    cd server && just stop-all-server
+    cd client && just stop-all-client
+
+remove-all:
+    cd server && just remove-all-server
+    cd client && just remove-all-client
+
+start-all:
+    cd server && just start-all-server
+    cd client && just start-all-client
+
+restart-all:
+    cd server && just restart-all-server
+    cd client && just restart-all-client
+
+renew-all:
+    cd server && just renew-all-server
+    cd client && just renew-all-client
+
+run-all:
+    cd server && just run-all-server
+    cd client && just run-all-client

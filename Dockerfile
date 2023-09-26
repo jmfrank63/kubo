@@ -56,7 +56,8 @@ COPY --from=utilities /lib/aarch64-linux-gnu/*.so.* /lib/
 COPY --from=builder $SRC_DIR/cmd/ipfs/ipfs /usr/local/bin/ipfs
 COPY --from=builder $SRC_DIR/bin/container_daemon /usr/local/bin/start_ipfs
 COPY --from=builder $SRC_DIR/bin/container_init_run /usr/local/bin/container_init_run
-COPY --from=rustlib_builder /rustlib/target/aarch64-unknown-linux-gnu/release/libclient.so /usr/local/lib/libclient.so
+COPY --from=clientlib_builder /rustlib/target/aarch64-unknown-linux-gnu/release/libclient.so /usr/local/lib/libclient.so
+COPY --from=serverlib_builder /rustlib/target/aarch64-unknown-linux-gnu/release/libserver.so /usr/local/lib/libserver.so
 
 # Add suid bit on fusermount so it will run properly
 RUN chmod 4755 /usr/local/bin/fusermount

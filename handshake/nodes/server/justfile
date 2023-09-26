@@ -1,0 +1,70 @@
+# Create Docker network for IPFS server
+create-ipfs-server-network:
+    #!/usr/bin/env bash
+    docker network create --subnet=172.18.0.0/16 --gateway=172.18.0.1 ipfs_server_network || true
+
+# Run the IPFS server container
+run-ipfs-server:
+    #!/usr/bin/env bash
+    arch=$(uname -m)
+    if [ "$arch" = "x86_64" ]; then
+        arch="amd64"
+    fi
+    sleep 1
+    # Ensure that server_ipfs_staging and server_ipfs_data environment variables are set
+    export server_ipfs_data=${HOME}/Projects/Go/src/github.com/jmfrank63/kubo/handshake/tmp/server/data
+    export server_ipfs_staging=${HOME}/Projects/Go/src/github.com/jmfrank63/kubo/handshake/tmp/server/staging
+    docker run -d --name ipfs_server --cap-add=NET_ADMIN\
+      --network ipfs_server_network \
+      --ip 172.18.0.2 \
+      -e IPFS_SWARM_KEY_FILE=/keys/swarm.key \
+      -v $server_ipfs_staging:/export \
+      -v $server_ipfs_data:/data/ipfs \
+      -v ${HOME}/Projects/Go/src/github.com/jmfrank63/kubo/handshake/nodes/cars:/webui \
+      -v ${HOME}/Projects/Go/src/github.com/jmfrank63/kubo/handshake/keys:/keys \
+      -v ./init:/container-init.d \
+      -p 4001:4001 \
+      -p 4001:4001/udp \
+      -p 127.0.0.1:8080:8080 \
+      -p 127.0.0.1:5001:5001 \
+      jmfrank63/kubo-"$arch":master
+
+# Run the IPFS server container
+start-ipfs-server:
+    #!/usr/bin/env bash
+    docker start ipfs_server || true
+
+# Stop the IPFS server container
+stop-ipfs-server:
+    #!/usr/bin/env bash
+    docker stop ipfs_server || true
+
+# Remove the IPFS server container
+remove-ipfs-server:
+    #!/usr/bin/env bash
+    docker rm ipfs_server || true
+    # rm -rf ${HOME}/Projects/Go/src/github.com/jmfrank63/kubo/handshake/server/data
+    # rm -rf ${HOME}/Projects/Go/src/github.com/jmfrank63/kubo/handshake/server/staging
+
+# Remove the IPFS server network
+remove-ipfs-server-network:
+    #!/usr/bin/env bash
+    docker network rm ipfs_server_network || true
+
+# Start all
+start-all-server: start-ipfs-server
+
+# Run all
+run-all-server: create-ipfs-server-network run-ipfs-server
+
+# Stop all
+stop-all-server: stop-ipfs-server
+
+# Remove all
+remove-all-server: stop-ipfs-server remove-ipfs-server remove-ipfs-server-network
+
+# Renew all
+renew-all-server: remove-all-server run-all-server
+
+# Restart all
+restart-all-server: stop-all-server start-all-server

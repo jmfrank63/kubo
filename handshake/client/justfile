@@ -1,0 +1,8 @@
+build:
+    docker build -t clientlib_builder .
+    docker create --name clientlib_container clientlib_builder
+    docker cp clientlib_container:/rustlib/target/aarch64-unknown-linux-gnu/release/libclient.so  ../../plugin/plugins/client/lib/libclient.so
+
+clean:
+    docker rm clientlib_container
+    docker rmi clientlib_builder

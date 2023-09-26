@@ -1,0 +1,20 @@
+start-bridge:
+    docker run -d --restart always --name dante-bridge \
+        -p 1080:1080 \
+        --network ipfs_client_network \
+        --ip 172.19.0.3 \
+        --cap-add NET_ADMIN \
+        --mount type=bind,source=./dante.conf,target=/etc/sockd.conf \
+        --mount type=bind,source=./generate.sh,target=/generate.sh \
+        -v ./log:/var/log \
+        aeron/socks5-dante-proxy
+    docker network connect ipfs_server_network --ip 172.18.0.3 dante-bridge
+    # docker run -it --rm --volumes-from dante-bridge aeron/socks5-dante-proxy /generate.sh
+
+stop-bridge:
+    docker stop dante-bridge || true
+    docker network disconnect ipfs_server_network dante-bridge || true
+    docker network disconnect ipfs_client_network dante-bridge || true
+
+remove-bridge: stop-bridge
+    docker rm dante-bridge || true

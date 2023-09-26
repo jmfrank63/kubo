@@ -1,15 +1,12 @@
 package client
 
 /*
-#cgo LDFLAGS: -L. -lclient
+#cgo CFLAGS: -g -Wall -I${SRCDIR}/include
+#cgo LDFLAGS: -L${SRCDIR}/lib -lclient
+#include <stdio.h>
+#include <errno.h>
 #include <stdlib.h>
-
-typedef struct {
-	char* data;
-	char* error;
-} Result;
-
-extern Result start_client();
+#include "./include/client.h"
 */
 import "C"
 
@@ -47,22 +44,27 @@ func (*clientPlugin) Init(env *plugin.Environment) error {
 }
 
 func (*clientPlugin) Start(_ coreiface.CoreAPI) error {
-	fmt.Println("Hello from Client via Rust!")
+    fmt.Println("Hello from Client Plugin in Go!")
 
-	// Call the Rust function
-	result := C.start_client()
-	defer C.free(unsafe.Pointer(result.data))
-	defer C.free(unsafe.Pointer(result.error))
+    // Call the Rust function
+    result := C.start_client()
 
-	// Check for errors from the Rust function
-	if result.error != nil {
-		return fmt.Errorf(C.GoString(result.error))
-	}
+    defer C.free(unsafe.Pointer(result.data))
+    defer C.free(unsafe.Pointer(result.error))
 
-	// Print or use the result
-	fmt.Println(C.GoString(result.data))
+    if result.error != nil {
+        fmt.Printf("Go received error: %s\n", C.GoString(result.error))
+    }
 
-	return nil
+    // Check for errors from the Rust function
+    if result.error != nil {
+        return fmt.Errorf(C.GoString(result.error))
+    }
+
+    // Print or use the result
+    fmt.Println(C.GoString(result.data))
+
+    return nil
 }
 
 func (*clientPlugin) Close() error {

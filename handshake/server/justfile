@@ -1,0 +1,8 @@
+build:
+    docker build -t serverlib_builder .
+    docker create --name serverlib_container serverlib_builder
+    docker cp serverlib_container:/rustlib/target/aarch64-unknown-linux-gnu/release/libserver.so  ../../plugin/plugins/server/lib/libserver.so
+
+clean:
+    docker rm serverlib_container
+    docker rmi serverlib_builder
