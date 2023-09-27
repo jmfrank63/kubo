@@ -23,11 +23,13 @@ push: build tag
     docker push jmfrank63/kubo-"$arch":master
 
 start-all:
-    just --justfile handshake/client/justfile build
-    just --justfile handshake/server/justfile build
-    just push
-    just --justfile handshake/nodes/justfile start-all-nodes
+    just --justfile handshake/nodes/justfile create-all-networks
     just --justfile handshake/nodes/bridge/justfile start-bridge
+    just --justfile handshake/nodes/justfile start-all-nodes
+
+stop-all:
+    just --justfile handshake/nodes/justfile stop-all-nodes
+    just --justfile handshake/nodes/bridge/justfile stop-bridge
 
 remove-all:
     just --justfile handshake/client/justfile clean || true
@@ -39,6 +41,8 @@ remove-all:
 renew-all: remove-all
     just --justfile handshake/client/justfile build
     just --justfile handshake/server/justfile build
+    just --justfile handshake/nodes/bridge/justfile push
     just push
-    just --justfile handshake/nodes/justfile renew-all-nodes
+    just --justfile handshake/nodes/justfile create-all-networks
     just --justfile handshake/nodes/bridge/justfile start-bridge
+    just --justfile handshake/nodes/justfile run-all-nodes

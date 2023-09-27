@@ -7,9 +7,9 @@ start-bridge:
         --mount type=bind,source=./dante.conf,target=/etc/sockd.conf \
         --mount type=bind,source=./generate.sh,target=/generate.sh \
         -v ./log:/var/log \
-        aeron/socks5-dante-proxy
+        jmfrank63/dante:latest
     docker network connect ipfs_server_network --ip 172.18.0.3 dante-bridge
-    # docker run -it --rm --volumes-from dante-bridge aeron/socks5-dante-proxy /generate.sh
+    docker run -it --rm --volumes-from dante-bridge jmfrank63/dante:latest /generate.sh
 
 stop-bridge:
     docker stop dante-bridge || true
@@ -18,3 +18,12 @@ stop-bridge:
 
 remove-bridge: stop-bridge
     docker rm dante-bridge || true
+
+build:
+    docker build -t dante:latest .
+
+tag:
+    docker tag dante:latest jmfrank63/dante:latest
+
+push: build tag
+    docker push jmfrank63/dante:latest

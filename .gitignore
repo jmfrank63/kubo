@@ -35,3 +35,4 @@ docs/examples/go-ipfs-as-a-library/example-folder/Qm*
 /prime
 handshake/tmp
 handshake/target
+handshake/nodes/bridge/log

@@ -21,3 +21,7 @@ renew-all-nodes:
 run-all-nodes:
     cd server && just run-all-server
     cd client && just run-all-client
+
+create-all-networks:
+    cd server && just create-ipfs-server-network
+    cd client && just create-ipfs-client-network
