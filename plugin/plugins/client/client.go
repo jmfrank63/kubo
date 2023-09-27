@@ -11,6 +11,7 @@ package client
 import "C"
 
 import (
+	"context"
 	"fmt"
 	"unsafe"
 
@@ -45,9 +46,19 @@ func (*clientPlugin) Init(env *plugin.Environment) error {
 
 // Start starts the plugin, satisfying the plugin.Plugin interface. Put any
 // start logic here.
-func (*clientPlugin) Start(_ coreiface.CoreAPI) error {
+func (*clientPlugin) Start(api coreiface.CoreAPI) error {
+
+    // Get the local peer ID
+    peerID, err := getLocalPeerID(api)
+    if err != nil {
+        return err
+    }
+
+    cPeerID := C.CString(peerID)
+    defer C.free(unsafe.Pointer(cPeerID)) // Release memory
+
     // Call the Rust function
-    result := C.start_client()
+    result := C.start_client(cPeerID)
 
     defer C.free(unsafe.Pointer(result.data))
     defer C.free(unsafe.Pointer(result.error))
@@ -70,4 +81,28 @@ func (*clientPlugin) Start(_ coreiface.CoreAPI) error {
 func (*clientPlugin) Close() error {
 	fmt.Println("Goodbye from Client Plugin!")
 	return nil
+}
+
+func getLocalPeerID(api coreiface.CoreAPI) (string, error) {
+    // Get swarm API from the CoreAPI
+    keyAPI := api.Key()
+
+    // Use the swarm API to get a list of peers we are connected to
+    key, err := keyAPI.Self(context.Background())
+    if err != nil {
+        return "", err
+    }
+
+    keys, err := keyAPI.List(context.Background())
+    if err != nil {
+        return "", err
+    }
+
+    for _, key := range keys {
+        fmt.Printf("Key: %s\n", key.Name())
+    }
+
+    peerID := key.ID().Pretty()
+    // Return the peer ID of the first peer, assuming it's our node's ID
+    return peerID, nil
 }
