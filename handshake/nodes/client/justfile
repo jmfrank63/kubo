@@ -28,7 +28,6 @@ run-ipfs-client:
       -p 4002:4001/udp \
       -p 127.0.0.1:8081:8080 \
       -p 127.0.0.1:5002:5002 \
-      -p 127.0.0.1:4444:4444 \
       jmfrank63/kubo-"$arch":master
 
 # Run the IPFS client container
@@ -57,7 +56,7 @@ remove-ipfs-client-network:
 start-all-client: start-ipfs-client
 
 # Run all
-run-all-client: create-ipfs-client-network run-ipfs-client
+run-all-client: run-ipfs-client
 
 # Stop all
 stop-all-client: stop-ipfs-client

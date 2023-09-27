@@ -20,9 +20,9 @@ run-ipfs-server:
       -e IPFS_SWARM_KEY_FILE=/keys/swarm.key \
       -v $server_ipfs_staging:/export \
       -v $server_ipfs_data:/data/ipfs \
+      -v ./init:/container-init.d \
       -v ${HOME}/Projects/Go/src/github.com/jmfrank63/kubo/handshake/nodes/cars:/webui \
       -v ${HOME}/Projects/Go/src/github.com/jmfrank63/kubo/handshake/keys:/keys \
-      -v ./init:/container-init.d \
       -p 4001:4001 \
       -p 4001:4001/udp \
       -p 127.0.0.1:8080:8080 \
@@ -55,7 +55,7 @@ remove-ipfs-server-network:
 start-all-server: start-ipfs-server
 
 # Run all
-run-all-server: create-ipfs-server-network run-ipfs-server
+run-all-server: run-ipfs-server
 
 # Stop all
 stop-all-server: stop-ipfs-server
