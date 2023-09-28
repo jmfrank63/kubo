@@ -27,7 +27,7 @@ run-ipfs-server:
       -p 4001:4001/udp \
       -p 127.0.0.1:8080:8080 \
       -p 127.0.0.1:5001:5001 \
-      jmfrank63/kubo-"$arch":master
+      kubo-"$arch":master
 
 # Run the IPFS server container
 start-ipfs-server:

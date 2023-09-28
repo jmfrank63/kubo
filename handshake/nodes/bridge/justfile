@@ -7,7 +7,7 @@ start-bridge:
         --mount type=bind,source=./dante.conf,target=/etc/sockd.conf \
         --mount type=bind,source=./generate.sh,target=/generate.sh \
         -v ./log:/var/log \
-        jmfrank63/dante:latest
+        dante:latest
     docker network connect ipfs_server_network --ip 172.18.0.3 dante-bridge
     docker run -it --rm --volumes-from dante-bridge jmfrank63/dante:latest /generate.sh
 

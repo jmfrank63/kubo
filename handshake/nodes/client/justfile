@@ -28,7 +28,7 @@ run-ipfs-client:
       -p 4002:4001/udp \
       -p 127.0.0.1:8081:8080 \
       -p 127.0.0.1:5002:5002 \
-      jmfrank63/kubo-"$arch":master
+      kubo-"$arch":master
 
 # Run the IPFS client container
 start-ipfs-client:

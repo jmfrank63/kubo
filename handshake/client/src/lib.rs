@@ -81,7 +81,10 @@ fn start_rust_client(
             .await
             .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
         println!("Now connected to server");
+        let mut n = 0u32;
         loop {
+            n += 1;
+            println!("Client loop iteration: {}", n);
             // Check for shutdown signal inside your main loop:
             if let Ok(_) | Err(oneshot::error::TryRecvError::Closed) = shutdown_receiver.try_recv()
             {
