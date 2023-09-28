@@ -12,7 +12,7 @@ key:
         rm -rf ./handshake/go-ipfs-swarm-key-gen
     fi
 
-build:
+build: key
     #!/usr/bin/env bash
     arch=$(uname -m)
     if [ "$arch" = "x86_64" ]; then
