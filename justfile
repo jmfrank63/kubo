@@ -7,6 +7,7 @@ key:
         fi
         cd ./handshake/go-ipfs-swarm-key-gen
         go run ipfs-swarm-key-gen/main.go > ../keys/swarm.key
+        chmod 600 ../keys/swarm.key
         cd -
         rm -rf ./handshake/go-ipfs-swarm-key-gen
     fi
