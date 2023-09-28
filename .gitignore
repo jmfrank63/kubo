@@ -36,3 +36,4 @@ docs/examples/go-ipfs-as-a-library/example-folder/Qm*
 handshake/tmp
 handshake/target
 handshake/nodes/bridge/log
+handshake/go-ipfs-swarm-key-gen

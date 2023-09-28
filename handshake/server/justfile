@@ -1,8 +1,15 @@
 build:
+    #!/usr/bin/env bash
+    TARGETARCH=$(uname -m)
     docker build -t serverlib_builder .
     docker create --name serverlib_container serverlib_builder
-    docker cp serverlib_container:/rustlib/target/aarch64-unknown-linux-gnu/release/libserver.so  ../../plugin/plugins/server/lib/libserver.so
+    mkdir -p ../../plugin/plugins/server/lib
+    if [ "$TARGETARCH" = "x86_64" ]; then \
+    docker cp serverlib_container:/rustlib/target/x86_64-unknown-linux-gnu/release/libserver.so  ../../plugin/plugins/server/lib/libserver.so; \
+    elif [ "$TARGETARCH" = "arm64" ]; then \
+    docker cp serverlib_container:/rustlib/target/aarch64-unknown-linux-gnu/release/libserver.so  ../../plugin/plugins/server/lib/libserver.so; \
+    fi
 
 clean:
-    docker rm serverlib_container
-    docker rmi serverlib_builder
+    docker rm serverlib_container || true
+    docker rmi serverlib_builder || true

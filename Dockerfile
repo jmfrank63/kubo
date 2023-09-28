@@ -45,6 +45,8 @@ RUN set -eux; \
 # Now comes the actual target image, which aims to be as small as possible.
 FROM busybox:stable-glibc
 
+ARG ARCH=x86_64
+
 # Get the ipfs binary, entrypoint script, and TLS CAs from the build container.
 ENV SRC_DIR /kubo
 COPY --from=utilities /usr/sbin/gosu /sbin/gosu
@@ -52,12 +54,12 @@ COPY --from=utilities /usr/bin/tini /sbin/tini
 COPY --from=utilities /bin/fusermount /usr/local/bin/fusermount
 COPY --from=utilities /etc/ssl/certs /etc/ssl/certs
 COPY --from=utilities /usr/bin/curl /usr/bin/curl
-COPY --from=utilities /lib/aarch64-linux-gnu/*.so.* /lib/
 COPY --from=builder $SRC_DIR/cmd/ipfs/ipfs /usr/local/bin/ipfs
 COPY --from=builder $SRC_DIR/bin/container_daemon /usr/local/bin/start_ipfs
 COPY --from=builder $SRC_DIR/bin/container_init_run /usr/local/bin/container_init_run
-COPY --from=clientlib_builder /rustlib/target/aarch64-unknown-linux-gnu/release/libclient.so /usr/local/lib/libclient.so
-COPY --from=serverlib_builder /rustlib/target/aarch64-unknown-linux-gnu/release/libserver.so /usr/local/lib/libserver.so
+COPY --from=utilities /lib/${ARCH}-linux-gnu/*.so.* /lib/
+COPY --from=clientlib_builder /rustlib/target/${ARCH}-unknown-linux-gnu/release/libclient.so /usr/local/lib/libclient.so
+COPY --from=serverlib_builder /rustlib/target/${ARCH}-unknown-linux-gnu/release/libserver.so /usr/local/lib/libserver.so
 
 # Add suid bit on fusermount so it will run properly
 RUN chmod 4755 /usr/local/bin/fusermount
