@@ -9,6 +9,6 @@ typedef struct
     char *error;
 } Result;
 
-Result *start_server(void);
+Result *start_server(const char *peerID);
 
 #endif // SERVER_H

@@ -1,10 +1,10 @@
 use lazy_static::lazy_static;
-use std::ffi::CString;
+use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
-use tokio::sync::{mpsc, oneshot};
+use tokio::sync::oneshot;
 
 #[repr(C)]
 pub struct FFIResult {
@@ -37,14 +37,31 @@ fn convert_to_ffi_result(
         })),
     }
 }
-
+/// # Safety
+///
+/// This function is unsafe because it dereferences a raw pointer.
+/// The caller must ensure that the pointer is valid and points to
+/// a valid object of the appropriate type.
 #[no_mangle]
-pub extern "C" fn start_server() -> *mut FFIResult {
-    let result = start_rust_server();
+pub unsafe extern "C" fn start_server(peer_id: *const c_char) -> *mut FFIResult {
+    let peer_id = match CStr::from_ptr(peer_id).to_str() {
+        Ok(s) => s,
+        Err(_) => {
+            return Box::into_raw(Box::new(FFIResult {
+                data: std::ptr::null_mut(),
+                error: CString::new("Invalid peer id format").unwrap().into_raw(),
+            }))
+        }
+    };
+    let result = start_rust_server(peer_id);
     convert_to_ffi_result(result)
 }
 
-fn start_rust_server() -> std::result::Result<String, Box<dyn std::error::Error + Send>> {
+fn start_rust_server(
+    peer_id: &str,
+) -> std::result::Result<String, Box<dyn std::error::Error + Send>> {
+    let pid = Arc::new(format!("Server peer id: {}", peer_id));
+    println!("Server peer id: {}", pid);
     // Create a shutdown signal
     let (shutdown_sender, mut shutdown_receiver) = oneshot::channel();
 
@@ -52,16 +69,12 @@ fn start_rust_server() -> std::result::Result<String, Box<dyn std::error::Error 
     let rt = tokio::runtime::Runtime::new()
         .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
 
-    // Create an asynchronous channel
-    let (tx, mut rx) = mpsc::channel(32);
-
     let server_handle = Some(rt.spawn(async move {
         // Bind to port 2000
         let listener = TcpListener::bind("172.18.0.2:2000")
             .await
             .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
         println!("Listening on: {}", listener.local_addr().unwrap());
-
         loop {
             // Check for shutdown signal inside your main loop:
             if let Ok(_) | Err(oneshot::error::TryRecvError::Closed) = shutdown_receiver.try_recv()
@@ -69,6 +82,8 @@ fn start_rust_server() -> std::result::Result<String, Box<dyn std::error::Error 
                 println!("Received shutdown signal");
                 return Ok::<_, Box<dyn std::error::Error + Send>>("Server shutting down".into());
             }
+            // Clone the arc to pass it to the spawned task
+            let pid = Arc::clone(&pid);
 
             // Await a connection and read the message
             let (mut socket, addr) = listener
@@ -76,10 +91,7 @@ fn start_rust_server() -> std::result::Result<String, Box<dyn std::error::Error 
                 .await
                 .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
             println!("Got connection from: {:?}", addr);
-
-            let tx_clone = tx.clone();
-
-            tokio::spawn(async move {
+            loop {
                 let mut buf = [0u8; 1024];
                 let nbytes = socket
                     .read(&mut buf)
@@ -89,35 +101,17 @@ fn start_rust_server() -> std::result::Result<String, Box<dyn std::error::Error 
                 if nbytes > 0 {
                     let received_message = String::from_utf8_lossy(&buf[..nbytes]);
                     let received_message = received_message.trim_matches(char::from(0));
-                    tx_clone
-                        .send(received_message.to_string())
-                        .await
-                        .expect("Error sending message to channel");
                     println!("Message received: {}", received_message);
-                    // Echo the received message back to the client
-                    if let Err(e) = socket.write_all(received_message.as_bytes()).await {
+
+                    // Answer with your own peer id
+                    if let Err(e) = socket.write_all(pid.as_bytes()).await {
                         println!("Failed to send back the message: {}", e);
                     }
                 } else {
                     let error_message = "No data received from client";
                     println!("{}", error_message);
-                    tx_clone
-                        .send(error_message.to_string())
-                        .await
-                        .expect("Error sending error message to channel");
                 }
-            });
-
-            // Receive the message or error from the channel
-            let message = rx.recv().await.expect("Error receiving from channel");
-            if message == "No data received from client" {
-                return Err(Box::new(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    message,
-                )));
             }
-            // Otherwise, you can continue processing the message or do something else.
-            // Since we're in a loop, we'll go back and wait for the next connection.
         }
     }));
 

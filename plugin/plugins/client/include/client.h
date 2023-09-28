@@ -10,6 +10,5 @@ typedef struct
 } Result;
 
 Result *start_client(const char *peerID);
-void free_cstring(char *ptr);
 
 #endif // CLIENT_H
