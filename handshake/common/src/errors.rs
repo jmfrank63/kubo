@@ -1,1 +1,1 @@
-pub type DynError = Box<dyn std::error::Error + Send>;
+pub type DynError = Box<dyn std::error::Error + Send + 'static>;
