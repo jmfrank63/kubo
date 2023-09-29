@@ -144,10 +144,12 @@ fn start_rust_server(
                 .write_message(pid.as_bytes(), &mut buf)
                 .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
             send(&mut stream, &buf[..len]).await?;
-            println!(
-                "Server answered with its peer id : {}",
-                String::from_utf8_lossy(&buf[..len])
-            );
+            println!("Server answered with its peer id : {}", pid);
+            let hex_string: String = buf[..len]
+                .iter()
+                .map(|byte| format!("{:02x}", byte))
+                .collect();
+            println!("Encrypted message sent to initiator: {}", hex_string);
 
             println!("Server sleeping for 100 milliseconds");
             tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;

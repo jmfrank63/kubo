@@ -133,6 +133,11 @@ fn start_rust_client(
                 .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
             send(&mut stream, &buf[..len]).await?;
             println!("Initiator sent message to listener: {}", pid);
+            let hex_string: String = buf[..len]
+                .iter()
+                .map(|byte| format!("{:02x}", byte))
+                .collect();
+            println!("Encrypted message sent to listener: {}", hex_string);
 
             let msg = recv(&mut stream).await?;
 
