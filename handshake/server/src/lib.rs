@@ -66,8 +66,8 @@ pub unsafe extern "C" fn start_server(peer_id: *const c_char) -> *mut FFIResult 
 fn start_rust_server(
     peer_id: &str,
 ) -> std::result::Result<String, Box<dyn std::error::Error + Send>> {
-    let pid = Arc::new(format!("Server peer id: {}", peer_id));
-    println!("Server peer id: {}", pid);
+    let pid = Arc::new(format!("Listener peer id: {}", peer_id));
+    println!("Hello, I am {}", pid);
     // Create a shutdown signal
     let (shutdown_sender, mut shutdown_receiver) = oneshot::channel();
 
@@ -88,7 +88,7 @@ fn start_rust_server(
         .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
 
     let server_handle = Some(rt.spawn(async move {
-        // Bind to port 2000
+        // Bind to listener address and port
         let listener = TcpListener::bind("172.18.0.2:2000")
             .await
             .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
@@ -144,6 +144,10 @@ fn start_rust_server(
                 .write_message(pid.as_bytes(), &mut buf)
                 .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
             send(&mut stream, &buf[..len]).await?;
+            println!(
+                "Server answered with its peer id : {}",
+                String::from_utf8_lossy(&buf[..len])
+            );
 
             println!("Server sleeping for 100 milliseconds");
             tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
@@ -159,7 +163,7 @@ fn start_rust_server(
             server_handle,
         });
     }
-    Ok("Server started".into())
+    Ok("Listener runtime sucessfully started".into())
 }
 
 #[no_mangle]

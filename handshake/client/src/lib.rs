@@ -2,6 +2,7 @@ use lazy_static::lazy_static;
 use snow::params::NoiseParams;
 use snow::Builder;
 use std::ffi::{CStr, CString};
+use std::net::SocketAddr;
 use std::os::raw::c_char;
 use std::sync::Mutex;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -68,8 +69,8 @@ pub unsafe extern "C" fn start_client(peer_id: *const c_char) -> *mut FFIResult 
 fn start_rust_client(
     peer_id: &str,
 ) -> std::result::Result<String, Box<dyn std::error::Error + Send>> {
-    let pid = format!("Client peer id: {}", peer_id);
-    println!("Client started with peer id: {}", pid);
+    let pid = format!("Initiator peer id: {}", peer_id);
+    println!("Hello, I am {}", pid);
     // Create a shutdown signal
     let (shutdown_sender, mut shutdown_receiver) = oneshot::channel();
 
@@ -91,12 +92,13 @@ fn start_rust_client(
 
     let server_handle = Some(rt.spawn(async move {
         // Connect via SOCKS5 proxy
-        let proxy: std::net::SocketAddr = "172.19.0.3:1080".parse().unwrap();
-        let target = TargetAddr::Domain("172.18.0.2".into(), 2000);
-        let mut stream = Socks5Stream::connect_with_password(proxy, target, "socks", "socks")
+        let proxy_addr: SocketAddr = "172.19.0.3:1080".parse().unwrap();
+        let server_addr: SocketAddr = "172.18.0.2:2000".parse().unwrap();
+        let target = TargetAddr::Ip(server_addr);
+        let mut stream = Socks5Stream::connect_with_password(proxy_addr, target, "socks", "socks")
             .await
             .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
-        println!("Now connected to server");
+        println!("Now connected to server {} via socks proxy at {}", server_addr, proxy_addr);
 
         // -> e
         let len = noise
@@ -130,7 +132,7 @@ fn start_rust_client(
                 .write_message(pid.as_bytes(), &mut buf)
                 .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
             send(&mut stream, &buf[..len]).await?;
-            println!("Sent message: {}", pid);
+            println!("Initiator sent message to listener: {}", pid);
 
             let msg = recv(&mut stream).await?;
 
@@ -138,7 +140,7 @@ fn start_rust_client(
                 .read_message(&msg, &mut buf)
                 .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
             println!(
-                "Server sent answer : {}",
+                "Server answered : {}",
                 String::from_utf8_lossy(&buf[..len])
             );
 
@@ -156,7 +158,7 @@ fn start_rust_client(
             server_handle,
         });
     }
-    Ok("Server started".into())
+    Ok("Initiator runtime sucessfully started".into())
 }
 
 #[no_mangle]
