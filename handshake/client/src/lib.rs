@@ -1,13 +1,14 @@
 use lazy_static::lazy_static;
+use snow::params::NoiseParams;
+use snow::Builder;
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 use std::sync::Mutex;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use tokio::net::TcpStream;
 use tokio::sync::oneshot;
 use tokio_socks::tcp::Socks5Stream;
 use tokio_socks::TargetAddr;
-
-const NO_DATA: &str = "No data received from server";
 
 #[repr(C)]
 pub struct FFIResult {
@@ -24,6 +25,9 @@ struct ServerState {
 
 lazy_static! {
     static ref SERVER_STATE: Mutex<Option<ServerState>> = Mutex::new(None);
+}
+lazy_static! {
+    static ref PARAMS: NoiseParams = "Noise_NN_25519_ChaChaPoly_BLAKE2s".parse().unwrap();
 }
 
 fn convert_to_ffi_result(
@@ -73,6 +77,18 @@ fn start_rust_client(
     let rt = tokio::runtime::Runtime::new()
         .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
 
+    let mut buf = vec![0u8; 65535];
+
+    // Initialize our initiator using a builder.
+    let builder: Builder<'_> = Builder::new(PARAMS.clone());
+    let key_pair = builder
+        .generate_keypair()
+        .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+    let mut noise = builder
+        .local_private_key(key_pair.private.as_slice())
+        .build_initiator()
+        .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+
     let server_handle = Some(rt.spawn(async move {
         // Connect via SOCKS5 proxy
         let proxy: std::net::SocketAddr = "172.19.0.3:1080".parse().unwrap();
@@ -81,7 +97,25 @@ fn start_rust_client(
             .await
             .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
         println!("Now connected to server");
+
+        // -> e
+        let len = noise
+            .write_message(&[], &mut buf)
+            .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+        send(&mut stream, &buf[..len]).await?;
+
+        // <- e, ee
+        noise
+            .read_message(&recv(&mut stream).await?, &mut buf)
+            .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+
+        let mut noise = noise
+            .into_transport_mode()
+            .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+        println!("Client side session established...");
+
         let mut n = 0u32;
+
         loop {
             n += 1;
             println!("Client loop iteration: {}", n);
@@ -92,25 +126,23 @@ fn start_rust_client(
                 return Ok::<_, Box<dyn std::error::Error + Send>>("Client shutting down".into());
             }
 
-            stream
-                .write_all(pid.as_bytes())
-                .await
+            let len = noise
+                .write_message(pid.as_bytes(), &mut buf)
                 .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+            send(&mut stream, &buf[..len]).await?;
             println!("Sent message: {}", pid);
 
-            let mut buf = vec![0u8; 1024];
-            let nbytes = stream.read(&mut buf).await.unwrap_or(0);
-            println!("Received {} bytes", nbytes);
-            if nbytes > 0 {
-                let received_message = String::from_utf8_lossy(&buf[..nbytes]);
-                let received_message = received_message.trim_matches(char::from(0));
-                println!("Received message: {}", received_message);
-            } else {
-                let error_message = NO_DATA;
-                println!("{}", error_message);
-            }
+            let msg = recv(&mut stream).await?;
 
-            println!("Sleeping for 1 second");
+            let len = noise
+                .read_message(&msg, &mut buf)
+                .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+            println!(
+                "Server sent answer : {}",
+                String::from_utf8_lossy(&buf[..len])
+            );
+
+            println!("Client sleeping for 100 milliseconds");
             tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
         }
     }));
@@ -141,4 +173,33 @@ pub extern "C" fn close_server() {
             let _ = state.runtime.block_on(server_handle);
         }
     }
+}
+
+/// Hyper-basic stream transport receiver. 16-bit BE size followed by payload.
+async fn recv(stream: &mut TcpStream) -> Result<Vec<u8>, Box<dyn std::error::Error + Send>> {
+    let mut msg_len_buf = [0u8; 2];
+    stream
+        .read_exact(&mut msg_len_buf)
+        .await
+        .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+    let msg_len = ((msg_len_buf[0] as usize) << 8) + (msg_len_buf[1] as usize);
+    let mut msg = vec![0u8; msg_len];
+    stream
+        .read_exact(&mut msg[..])
+        .await
+        .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+    Ok(msg)
+}
+
+/// Hyper-basic stream transport sender. 16-bit BE size followed by payload.
+async fn send(stream: &mut TcpStream, buf: &[u8]) -> Result<(), Box<dyn std::error::Error + Send>> {
+    let msg_len_buf = [(buf.len() >> 8) as u8, (buf.len() & 0xff) as u8];
+    stream
+        .write_all(&msg_len_buf)
+        .await
+        .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+    stream
+        .write_all(buf)
+        .await
+        .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)
 }
