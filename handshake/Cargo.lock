@@ -156,12 +156,19 @@ dependencies = [
 name = "client"
 version = "0.1.0"
 dependencies = [
- "curve25519-dalek",
+ "common",
  "lazy_static",
- "rand",
  "snow",
  "tokio",
  "tokio-socks",
+]
+
+[[package]]
+name = "common"
+version = "0.1.0"
+dependencies = [
+ "curve25519-dalek",
+ "rand",
 ]
 
 [[package]]
@@ -540,9 +547,8 @@ checksum = "ad977052201c6de01a8ef2aa3378c4bd23217a056337d1d6da40468d267a4fb0"
 name = "server"
 version = "0.1.0"
 dependencies = [
- "curve25519-dalek",
+ "common",
  "lazy_static",
- "rand",
  "snow",
  "tokio",
 ]

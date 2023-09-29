@@ -1,6 +1,5 @@
-mod errors;
-mod noise;
-
+use common::errors::DynError;
+use common::noise::generate_keypair;
 use lazy_static::lazy_static;
 use snow::params::NoiseParams;
 use snow::Builder;
@@ -10,7 +9,6 @@ use std::sync::{Arc, Mutex};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::oneshot;
-use noise::generate_keypair;
 
 #[repr(C)]
 pub struct FFIResult {
@@ -21,8 +19,7 @@ pub struct FFIResult {
 struct ServerState {
     runtime: tokio::runtime::Runtime,
     shutdown_signal: Option<oneshot::Sender<()>>,
-    server_handle:
-        Option<tokio::task::JoinHandle<Result<String, Box<dyn std::error::Error + Send>>>>,
+    server_handle: Option<tokio::task::JoinHandle<Result<String, DynError>>>,
 }
 
 lazy_static! {
@@ -33,9 +30,7 @@ lazy_static! {
     static ref PARAMS: NoiseParams = "Noise_NN_25519_ChaChaPoly_BLAKE2s".parse().unwrap();
 }
 
-fn convert_to_ffi_result(
-    res: std::result::Result<String, Box<dyn std::error::Error + Send>>,
-) -> *mut FFIResult {
+fn convert_to_ffi_result(res: Result<String, DynError>) -> *mut FFIResult {
     match res {
         Ok(data) => Box::into_raw(Box::new(FFIResult {
             data: CString::new(data).unwrap().into_raw(),
@@ -67,17 +62,14 @@ pub unsafe extern "C" fn start_server(peer_id: *const c_char) -> *mut FFIResult 
     convert_to_ffi_result(result)
 }
 
-fn start_rust_server(
-    peer_id: &str,
-) -> std::result::Result<String, Box<dyn std::error::Error + Send>> {
+fn start_rust_server(peer_id: &str) -> Result<String, DynError> {
     let pid = Arc::new(format!("Listener peer id: {}", peer_id));
     println!("Hello, I am {}", pid);
     // Create a shutdown signal
     let (shutdown_sender, mut shutdown_receiver) = oneshot::channel();
 
     // Create the tokio runtime
-    let rt = tokio::runtime::Runtime::new()
-        .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+    let rt = tokio::runtime::Runtime::new().map_err(|e| Box::new(e) as DynError)?;
 
     let mut buf = vec![0u8; 65535];
 
@@ -87,35 +79,35 @@ fn start_rust_server(
     let mut noise = builder
         .local_private_key(key_pair.private.as_slice())
         .build_responder()
-        .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+        .map_err(|e| Box::new(e) as DynError)?;
 
     let server_handle = Some(rt.spawn(async move {
         // Bind to listener address and port
         let listener = TcpListener::bind("172.18.0.2:2000")
             .await
-            .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+            .map_err(|e| Box::new(e) as DynError)?;
         println!("Listening on: {}", listener.local_addr().unwrap());
 
         // Await a connection and read the message
         let (mut stream, addr) = listener
             .accept()
             .await
-            .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+            .map_err(|e| Box::new(e) as DynError)?;
         println!("Got connection from: {:?}", addr);
         // <- e
         noise
             .read_message(&recv(&mut stream).await?, &mut buf)
-            .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+            .map_err(|e| Box::new(e) as DynError)?;
 
         // -> e, ee
         let len = noise
             .write_message(&[], &mut buf)
-            .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+            .map_err(|e| Box::new(e) as DynError)?;
         send(&mut stream, &buf[..len]).await?;
 
         let mut noise = noise
             .into_transport_mode()
-            .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+            .map_err(|e| Box::new(e) as DynError)?;
         println!("Server side session established...");
 
         let mut n = 0u32;
@@ -127,7 +119,7 @@ fn start_rust_server(
             if let Ok(_) | Err(oneshot::error::TryRecvError::Closed) = shutdown_receiver.try_recv()
             {
                 println!("Received shutdown signal");
-                return Ok::<_, Box<dyn std::error::Error + Send>>("Server shutting down".into());
+                return Ok::<_, DynError>("Server shutting down".into());
             }
             // Clone the arc to pass it to the spawned task
             let pid = Arc::clone(&pid);
@@ -136,7 +128,7 @@ fn start_rust_server(
 
             let len = noise
                 .read_message(&msg, &mut buf)
-                .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+                .map_err(|e| Box::new(e) as DynError)?;
             println!(
                 "Client sent message : {}",
                 String::from_utf8_lossy(&buf[..len])
@@ -144,7 +136,7 @@ fn start_rust_server(
             // Answer with your own peer id
             let len = noise
                 .write_message(pid.as_bytes(), &mut buf)
-                .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+                .map_err(|e| Box::new(e) as DynError)?;
             send(&mut stream, &buf[..len]).await?;
             println!("Server answered with its peer id : {}", pid);
             let hex_string: String = buf[..len]
@@ -187,30 +179,30 @@ pub extern "C" fn close_server() {
 }
 
 /// Hyper-basic stream transport receiver. 16-bit BE size followed by payload.
-async fn recv(stream: &mut TcpStream) -> Result<Vec<u8>, Box<dyn std::error::Error + Send>> {
+async fn recv(stream: &mut TcpStream) -> Result<Vec<u8>, DynError> {
     let mut msg_len_buf = [0u8; 2];
     stream
         .read_exact(&mut msg_len_buf)
         .await
-        .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+        .map_err(|e| Box::new(e) as DynError)?;
     let msg_len = ((msg_len_buf[0] as usize) << 8) + (msg_len_buf[1] as usize);
     let mut msg = vec![0u8; msg_len];
     stream
         .read_exact(&mut msg[..])
         .await
-        .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+        .map_err(|e| Box::new(e) as DynError)?;
     Ok(msg)
 }
 
 /// Hyper-basic stream transport sender. 16-bit BE size followed by payload.
-async fn send(stream: &mut TcpStream, buf: &[u8]) -> Result<(), Box<dyn std::error::Error + Send>> {
+async fn send(stream: &mut TcpStream, buf: &[u8]) -> Result<(), DynError> {
     let msg_len_buf = [(buf.len() >> 8) as u8, (buf.len() & 0xff) as u8];
     stream
         .write_all(&msg_len_buf)
         .await
-        .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+        .map_err(|e| Box::new(e) as DynError)?;
     stream
         .write_all(buf)
         .await
-        .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)
+        .map_err(|e| Box::new(e) as DynError)
 }

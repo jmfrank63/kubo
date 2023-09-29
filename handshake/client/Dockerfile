@@ -8,6 +8,8 @@ WORKDIR /rustlib
 
 # Copy the Rust project into the container
 COPY . .
+COPY ../common /rustlib/common
+
 
 # Install necessary tools and libraries
 RUN apt-get update && apt-get upgrade -y

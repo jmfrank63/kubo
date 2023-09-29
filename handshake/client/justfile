@@ -1,7 +1,10 @@
 build:
     #!/usr/bin/env bash
+    set -e
     TARGETARCH=$(uname -m)
-    docker build -t clientlib_builder .
+    (cd ..
+    docker build -f client/Dockerfile -t clientlib_builder .
+    )
     docker create --name clientlib_container clientlib_builder
     mkdir -p ../../plugin/plugins/client/lib
     if [ "$TARGETARCH" = "x86_64" ]; then \
