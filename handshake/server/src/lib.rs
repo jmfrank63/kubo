@@ -1,3 +1,6 @@
+mod errors;
+mod noise;
+
 use lazy_static::lazy_static;
 use snow::params::NoiseParams;
 use snow::Builder;
@@ -7,6 +10,7 @@ use std::sync::{Arc, Mutex};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::oneshot;
+use noise::generate_keypair;
 
 #[repr(C)]
 pub struct FFIResult {
@@ -79,9 +83,7 @@ fn start_rust_server(
 
     // Initialize our responder using a builder.
     let builder: Builder<'_> = Builder::new(PARAMS.clone());
-    let key_pair = builder
-        .generate_keypair()
-        .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+    let key_pair = generate_keypair()?;
     let mut noise = builder
         .local_private_key(key_pair.private.as_slice())
         .build_responder()
