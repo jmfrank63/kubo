@@ -11,6 +11,6 @@ crate-type = ["cdylib"]
 [dependencies]
 futures = "0.3"
 lazy_static = "1.4.0"
-tokio-socks = "0.5.1"
+tokio-socks = { git = "https://github.com/jmfrank63/tokio-socks.git", branch = "implement-asrawfd" }
 tokio = { version = "1", features = ["full"] }
 common = { path = "../common" }

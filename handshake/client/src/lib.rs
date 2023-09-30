@@ -124,6 +124,8 @@ b014416087025d9e34862cedb87468f2a2e2b6cd99d288107f87a0641328b351
         let mut encrypted_stream = EncryptedTcpStream::upgrade(stream, shared_secret);
         println!("Client side session established...");
 
+        let fd = encrypted_stream.as_raw_fd();
+        println!("Client fd: {}", fd);
         let mut n = 0u32;
 
         loop {

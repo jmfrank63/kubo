@@ -4,6 +4,7 @@ extern crate rand;
 use crate::errors::DynError;
 use std::task::{Context, Poll};
 use std::time::Duration;
+use std::os::fd::AsRawFd;
 use std::{cell::RefCell, pin::Pin};
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 
@@ -286,6 +287,12 @@ impl<S: Stream> AsyncWrite for EncryptedTcpStream<S> {
 
     fn poll_shutdown(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<std::io::Result<()>> {
         Pin::new(&mut self.get_mut().inner).poll_shutdown(cx)
+    }
+}
+
+impl<S: Stream + AsRawFd> EncryptedTcpStream<S> {
+    pub fn as_raw_fd(&self) -> std::os::fd::RawFd {
+        self.inner.as_raw_fd()
     }
 }
 
