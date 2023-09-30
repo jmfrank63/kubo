@@ -2,7 +2,9 @@
 #![allow(unused_imports)]
 #![allow(unused_mut)]
 use common::errors::DynError;
-use common::noise::{decode_shared_secret, diffie_hellman, generate_keypair, mix_keys};
+use common::noise::{
+    decode_shared_secret, diffie_hellman, generate_keypair, mix_keys, EncryptedTcpStream,
+};
 use lazy_static::lazy_static;
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
@@ -104,11 +106,9 @@ fn start_rust_server(peer_id: &str) -> Result<String, DynError> {
         let ristretto_point = diffie_hellman(private_key, client_ephemeral)?;
         let dh_secret = ristretto_point.compress().to_bytes();
         let psk = decode_shared_secret(swarm_key)?;
-        let _shared_secret = mix_keys(&dh_secret, &psk);
+        let shared_secret = mix_keys(&dh_secret, &psk);
 
-        // let mut noise = noise
-        //     .into_transport_mode()
-        //     .map_err(|e| Box::new(e) as DynError)?;
+        let mut encrypted_stream = EncryptedTcpStream::upgrade(stream, shared_secret);
         println!("Server side session established...");
 
         let mut n = 0u32;
@@ -125,26 +125,13 @@ fn start_rust_server(peer_id: &str) -> Result<String, DynError> {
             // Clone the arc to pass it to the spawned task
             let pid = Arc::clone(&pid);
 
+            let msg = encrypted_stream.recv().await?;
             // let msg = recv(&mut stream).await?;
 
-            // let len = noise
-            //     .read_message(&msg, &mut buf)
-            //     .map_err(|e| Box::new(e) as DynError)?;
-            // println!(
-            //     "Client sent message : {}",
-            //     String::from_utf8_lossy(&buf[..len])
-            // );
+            println!("Client sent message : {}", String::from_utf8_lossy(&msg));
             // Answer with your own peer id
-            // let len = noise
-            //     .write_message(pid.as_bytes(), &mut buf)
-            //     .map_err(|e| Box::new(e) as DynError)?;
-            // send(&mut stream, &buf[..len]).await?;
+            encrypted_stream.send(pid.as_bytes()).await?;
             println!("Server answered with its peer id : {}", pid);
-            // let hex_string: String = buf[..len]
-            //     .iter()
-            //     .map(|byte| format!("{:02x}", byte))
-            //     .collect();
-            // println!("Encrypted message sent to initiator: {}", hex_string);
 
             println!("Server sleeping for 100 milliseconds");
             tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;

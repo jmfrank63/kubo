@@ -22,8 +22,10 @@ use rand::Rng;
 use tokio::time::timeout;
 
 const NONCE_SIZE: usize = 12;
-const MAX_MESSAGE_SIZE: usize = 1024 * 1024 * 1024; // 1 GB
-const RECV_TIMEOUT: Duration = Duration::from_secs(30); // 30 seconds
+const MAX_MESSAGE_SIZE: usize = 1024 * 1024 * 1024;
+const RECV_TIMEOUT: Duration = Duration::from_secs(30);
+const READ_ITERATION_TIMEOUT: Duration = Duration::from_secs(2);
+const CHUNK_SIZE: usize = 4096;
 
 /// Represents an asymmetric keypair.
 pub struct Keypair {
@@ -31,6 +33,11 @@ pub struct Keypair {
     pub private: Vec<u8>,
     /// The public asymmetric key
     pub public: Vec<u8>,
+}
+
+enum ReadState {
+    ReadingLength,
+    ReadingData(usize), // usize stores the expected message length
 }
 
 pub trait Stream: AsyncRead + AsyncWrite + Unpin {}
@@ -41,11 +48,11 @@ pub struct EncryptedTcpStream<S: Stream> {
     inner: S,
     secret: Vec<u8>,
     nonce: RefCell<Nonce>,
+    read_state: ReadState,
+    read_buffer: Vec<u8>,
 }
 
 impl<S: AsyncRead + AsyncWrite + Unpin> EncryptedTcpStream<S> {
-    // ... [other methods like new, encrypt, decrypt] ...
-
     pub async fn send(&mut self, buf: &[u8]) -> Result<(), Box<dyn std::error::Error + Send>> {
         // Encrypt the data with the current nonce
         let encrypted_data = self.encrypt(buf).map_err(|e| Box::new(e) as DynError)?;
@@ -59,51 +66,70 @@ impl<S: AsyncRead + AsyncWrite + Unpin> EncryptedTcpStream<S> {
             combined_data
         };
 
-        // Write the length of the combined data (nonce + encrypted message)
         let total_len = combined_data.len();
         let msg_len_buf = [(total_len >> 8) as u8, (total_len & 0xff) as u8];
+
+        // First, send the length
         self.inner
             .write_all(&msg_len_buf)
             .await
             .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
 
-        // Write the combined data itself
-        self.inner
-            .write_all(&combined_data)
-            .await
-            .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)
-    }
-
-    async fn read_data_from_stream(
-        &mut self,
-    ) -> Result<Vec<u8>, Box<dyn std::error::Error + Send>> {
-        let mut buffer = Vec::new();
-
-        // First, read the length bytes (only two bytes)
-        let mut msg_len_buf = [0u8; 2];
-        self.inner
-            .read_exact(&mut msg_len_buf)
-            .await
-            .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
-        let msg_len = ((msg_len_buf[0] as usize) << 8) + (msg_len_buf[1] as usize);
-
-        // Size check to prevent over-allocation
-        if msg_len > MAX_MESSAGE_SIZE {
-            return Err(Box::new(std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                "Message too long",
-            )));
-        }
-
-        buffer.resize(msg_len, 0);
-        let mut bytes_read = 0;
-
-        while bytes_read < msg_len {
-            let read_result = self
-                .inner
-                .read(&mut buffer[bytes_read..])
+        // Then send the message in chunks
+        let mut bytes_sent = 0;
+        while bytes_sent < total_len {
+            let end = bytes_sent + CHUNK_SIZE.min(total_len - bytes_sent);
+            self.inner
+                .write_all(&combined_data[bytes_sent..end])
                 .await
                 .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+            bytes_sent = end;
+        }
+        Ok(())
+    }
+
+    async fn read_data_from_stream(&mut self) -> Result<(), Box<dyn std::error::Error + Send>> {
+        // First, read the length bytes (only two bytes) if we are in ReadingLength state
+        if matches!(self.read_state, ReadState::ReadingLength) {
+            let mut msg_len_buf = [0u8; 2];
+            self.inner
+                .read_exact(&mut msg_len_buf)
+                .await
+                .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+            let msg_len = ((msg_len_buf[0] as usize) << 8) + (msg_len_buf[1] as usize);
+            // Size check to prevent over-allocation
+            if msg_len > MAX_MESSAGE_SIZE {
+                return Err(Box::new(std::io::Error::new(
+                    std::io::ErrorKind::InvalidData,
+                    "Message too long",
+                )));
+            }
+
+            // Resize the buffer to the expected message length
+            self.read_buffer.clear();
+            self.read_buffer.resize(msg_len, 0);
+
+            // Transition to the ReadingData state
+            self.read_state = ReadState::ReadingData(msg_len);
+        }
+
+        let mut bytes_read = 0;
+        let target_length = self.read_buffer.len();
+
+        while bytes_read < target_length {
+            let remaining = target_length - bytes_read;
+
+            // The `min` function ensures we don't try to read more than available in our buffer
+            let read_slice =
+                &mut self.read_buffer[bytes_read..bytes_read + remaining.min(CHUNK_SIZE)];
+
+            let read_result = timeout(READ_ITERATION_TIMEOUT, {
+                self.inner.read(read_slice)
+            })
+            .await
+            .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?
+            .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+
             if read_result == 0 {
                 return Err(Box::new(std::io::Error::new(
                     std::io::ErrorKind::UnexpectedEof,
@@ -113,15 +139,15 @@ impl<S: AsyncRead + AsyncWrite + Unpin> EncryptedTcpStream<S> {
             bytes_read += read_result;
         }
 
-        Ok(buffer)
+        // Transition back to ReadingLength state
+        self.read_state = ReadState::ReadingLength;
+
+        Ok(())
     }
 
-    fn decrypt_received_data(
-        &mut self,
-        buffer: &[u8],
-    ) -> Result<Vec<u8>, Box<dyn std::error::Error + Send>> {
+    fn decrypt_received_data(&mut self) -> Result<Vec<u8>, Box<dyn std::error::Error + Send>> {
         // Split the nonce and the encrypted message
-        let (nonce_bytes, encrypted_data) = buffer.split_at(NONCE_SIZE);
+        let (nonce_bytes, encrypted_data) = self.read_buffer.split_at(NONCE_SIZE);
 
         // Update the current nonce to the one from the received data
         let nonce = {
@@ -138,8 +164,8 @@ impl<S: AsyncRead + AsyncWrite + Unpin> EncryptedTcpStream<S> {
     pub async fn recv(&mut self) -> Result<Vec<u8>, Box<dyn std::error::Error + Send>> {
         // Set a timeout for the entire receive operation
         let result = timeout(RECV_TIMEOUT, async {
-            let buffer = self.read_data_from_stream().await?;
-            self.decrypt_received_data(&buffer)
+            self.read_data_from_stream().await?;
+            self.decrypt_received_data()
         })
         .await;
 
@@ -161,6 +187,8 @@ impl<S: Stream> EncryptedTcpStream<S> {
             inner,
             secret,
             nonce,
+            read_state: ReadState::ReadingLength,
+            read_buffer: Vec::new(),
         }
     }
 
@@ -170,6 +198,8 @@ impl<S: Stream> EncryptedTcpStream<S> {
             inner,
             secret,
             nonce,
+            read_state: ReadState::ReadingLength,
+            read_buffer: Vec::new(),
         }
     }
 
@@ -349,8 +379,6 @@ pub fn encrypt(
 ) -> Result<Vec<u8>, chacha20poly1305::Error> {
     let key = chacha20poly1305::Key::from_slice(secret); // Our shared secret
     let cipher = ChaCha20Poly1305::new(key);
-    println!("key: {:?}", key);
-    println!("en nonce: {:?}", nonce);
     cipher.encrypt(nonce, data)
 }
 
@@ -371,10 +399,7 @@ pub fn decrypt(
     nonce: &Nonce,
 ) -> Result<Vec<u8>, chacha20poly1305::Error> {
     let key = chacha20poly1305::Key::from_slice(secret);
-    println!("key: {:?}", key);
-    println!("de nonce: {:?}", nonce);
     let cipher = ChaCha20Poly1305::new(key);
-    println!("ciphertext: {:?}", ciphertext);
     cipher.decrypt(nonce, ciphertext)
 }
 
@@ -578,32 +603,53 @@ mod tests {
     async fn test_basic_encryption_decryption() {
         let secret = b"test_secret_padded_with_zeros_!!".to_vec();
 
-        let (stream1, stream2) = tokio::io::duplex(43);
+        let (stream1, stream2) = tokio::io::duplex(10);
 
         let mut encrypted_stream1 = EncryptedTcpStream::new(stream1, secret.clone());
         let mut encrypted_stream2 = EncryptedTcpStream::new(stream2, secret.clone());
 
         let test_data = b"Hello, World!".to_vec();
+        let test_data2 = test_data.clone();
 
         // Send data through the first stream
-        encrypted_stream1
-            .send(&test_data)
-            .await
-            .expect("Failed to send data");
+        let sender = tokio::spawn(async move {
+            encrypted_stream1.send(&test_data).await.unwrap();
+        });
 
-        // Receive and decrypt data from the second stream
-        let received_data = encrypted_stream2
-            .recv()
-            .await
-            .expect("Failed to receive data");
+        let receiver = tokio::spawn(async move {
+            let received_data = encrypted_stream2.recv().await.unwrap();
+            assert_eq!(received_data, test_data2);
+        });
 
-        // Ensure the received data matches the original
-        assert_eq!(received_data, test_data);
+        sender.await.unwrap();
+        receiver.await.unwrap();
 
-        //     let encrypted_data = encrypted_stream2.encrypt(&test_data).unwrap();
-        //     assert_ne!(encrypted_data, test_data);
+    }
 
-        //     let decrypted_data = encrypted_stream1.decrypt(&encrypted_data).unwrap();
-        //     assert_eq!(decrypted_data, test_data);
+    #[tokio::test]
+    async fn test_basic_encryption_decryption_reverse() {
+        let secret = b"test_secret_padded_with_zeros_!!".to_vec();
+
+        let (stream1, stream2) = tokio::io::duplex(10);
+
+        let mut encrypted_stream1 = EncryptedTcpStream::new(stream1, secret.clone());
+        let mut encrypted_stream2 = EncryptedTcpStream::new(stream2, secret.clone());
+
+        let test_data = b"Hello, World!".to_vec();
+        let test_data2 = test_data.clone();
+
+        // Send data through the first stream
+        let sender = tokio::spawn(async move {
+            encrypted_stream2.send(&test_data).await.unwrap();
+        });
+
+        let receiver = tokio::spawn(async move {
+            let received_data = encrypted_stream1.recv().await.unwrap();
+            assert_eq!(received_data, test_data2);
+        });
+
+        sender.await.unwrap();
+        receiver.await.unwrap();
+
     }
 }
