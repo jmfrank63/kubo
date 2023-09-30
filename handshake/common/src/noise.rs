@@ -44,13 +44,13 @@ impl EncryptedTcpStream {
         }
     }
 
-    pub async fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>, chacha20poly1305::Error> {
+    pub fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>, chacha20poly1305::Error> {
         let result = encrypt(&self.secret, data, &self.nonce.borrow());
         self.increment_nonce();
         result
     }
 
-    pub async fn decrypt(&self, ciphertext: &[u8]) -> Result<Vec<u8>, chacha20poly1305::Error> {
+    pub fn decrypt(&self, ciphertext: &[u8]) -> Result<Vec<u8>, chacha20poly1305::Error> {
         decrypt(&self.secret, ciphertext, &self.nonce.borrow())
     }
 
@@ -78,7 +78,7 @@ impl AsyncRead for EncryptedTcpStream {
         match inner_poll {
             Poll::Ready(Ok(_)) => {
                 // Adjusting the decrypt call to match the provided signature
-                let decrypted_data = decrypt(&self.secret, &temp_buf, &self.nonce.borrow())
+                let decrypted_data = self.decrypt( &temp_buf)
                     .map_err(|_| {
                         std::io::Error::new(std::io::ErrorKind::InvalidData, "Decryption failed")
                     })?;
@@ -97,7 +97,7 @@ impl AsyncWrite for EncryptedTcpStream {
         cx: &mut Context<'_>,
         buf: &[u8],
     ) -> Poll<std::io::Result<usize>> {
-        let encrypted_data = encrypt(&self.secret, buf, &self.nonce.borrow()).map_err(|_| {
+        let encrypted_data = self.encrypt( buf).map_err(|_| {
             std::io::Error::new(std::io::ErrorKind::InvalidData, "Encryption failed")
         })?;
         Pin::new(&mut self.inner).poll_write(cx, &encrypted_data)
