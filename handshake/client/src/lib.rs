@@ -73,7 +73,10 @@ fn start_rust_client(
 ) -> std::result::Result<String, Box<dyn std::error::Error + Send>> {
     let pid = format!("Initiator peer id: {}", peer_id);
     println!("Hello, I am {}", pid);
-    let swarm_key = "b014416087025d9e34862cedb87468f2a2e2b6cd99d288107f87a0641328b351";
+    let swarm_key = "/key/swarm/psk/1.0.0/
+/base16/
+b014416087025d9e34862cedb87468f2a2e2b6cd99d288107f87a0641328b351
+";
     // Create a shutdown signal
     let (shutdown_sender, mut shutdown_receiver) = oneshot::channel();
 
@@ -99,21 +102,25 @@ fn start_rust_client(
 
         // Generate a new keypair
         let key_pair = generate_keypair()?;
+        println!("Client generated keypair {:?}", key_pair);
         // -> e
         stream.write_all(key_pair.public.as_ref()).await
             .map_err(|e| Box::new(e) as DynError)?;
-
+        println!("Client sent ephemeral public key to server");
         // <- e, ee
         let len = stream.read_exact(&mut buf[..key_pair.public.len()]).await
             .map_err(|e| Box::new(e) as DynError)?;
+        println!("Client received something");
         let server_ephemeral = &buf[..len];
+        println!("Client received {} bytes", len);
+        println!("Client received {:?}", server_ephemeral);
 
         let private_key = key_pair.private.as_slice();
         let ristretto_point = diffie_hellman(private_key, server_ephemeral)?;
         let dh_secret = ristretto_point.compress().to_bytes();
         let psk = decode_shared_secret(swarm_key)?;
         let shared_secret = mix_keys(&dh_secret, &psk);
-
+        println!("Shared secret: {:?}", shared_secret);
         let mut encrypted_stream = EncryptedTcpStream::upgrade(stream, shared_secret);
         println!("Client side session established...");
 
@@ -136,7 +143,7 @@ fn start_rust_client(
             println!("Server answered : {}", String::from_utf8_lossy(&msg));
 
             println!("Client sleeping for 100 milliseconds");
-            tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
+            tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
         }
     }));
 

@@ -28,6 +28,7 @@ const READ_ITERATION_TIMEOUT: Duration = Duration::from_secs(2);
 const CHUNK_SIZE: usize = 4096;
 
 /// Represents an asymmetric keypair.
+#[derive(Debug)]
 pub struct Keypair {
     /// The private asymmetric key
     pub private: Vec<u8>,
