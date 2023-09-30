@@ -1,8 +1,9 @@
+#![allow(unused_variables)]
+#![allow(unused_imports)]
+#![allow(unused_mut)]
 use common::errors::DynError;
-use common::noise::generate_keypair;
+use common::noise::{decode_shared_secret, diffie_hellman, generate_keypair, mix_keys};
 use lazy_static::lazy_static;
-use snow::params::NoiseParams;
-use snow::Builder;
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 use std::sync::{Arc, Mutex};
@@ -24,10 +25,6 @@ struct ServerState {
 
 lazy_static! {
     static ref SERVER_STATE: Mutex<Option<ServerState>> = Mutex::new(None);
-}
-
-lazy_static! {
-    static ref PARAMS: NoiseParams = "Noise_NN_25519_ChaChaPoly_BLAKE2s".parse().unwrap();
 }
 
 fn convert_to_ffi_result(res: Result<String, DynError>) -> *mut FFIResult {
@@ -65,6 +62,7 @@ pub unsafe extern "C" fn start_server(peer_id: *const c_char) -> *mut FFIResult 
 fn start_rust_server(peer_id: &str) -> Result<String, DynError> {
     let pid = Arc::new(format!("Listener peer id: {}", peer_id));
     println!("Hello, I am {}", pid);
+    let swarm_key = "b014416087025d9e34862cedb87468f2a2e2b6cd99d288107f87a0641328b351";
     // Create a shutdown signal
     let (shutdown_sender, mut shutdown_receiver) = oneshot::channel();
 
@@ -72,14 +70,6 @@ fn start_rust_server(peer_id: &str) -> Result<String, DynError> {
     let rt = tokio::runtime::Runtime::new().map_err(|e| Box::new(e) as DynError)?;
 
     let mut buf = vec![0u8; 65535];
-
-    // Initialize our responder using a builder.
-    let builder: Builder<'_> = Builder::new(PARAMS.clone());
-    let key_pair = generate_keypair()?;
-    let mut noise = builder
-        .local_private_key(key_pair.private.as_slice())
-        .build_responder()
-        .map_err(|e| Box::new(e) as DynError)?;
 
     let server_handle = Some(rt.spawn(async move {
         // Bind to listener address and port
@@ -94,20 +84,31 @@ fn start_rust_server(peer_id: &str) -> Result<String, DynError> {
             .await
             .map_err(|e| Box::new(e) as DynError)?;
         println!("Got connection from: {:?}", addr);
+
+        // Generate a new keypair
+        let key_pair = generate_keypair()?;
         // <- e
-        noise
-            .read_message(&recv(&mut stream).await?, &mut buf)
+        let len = stream
+            .read_exact(&mut buf[..key_pair.public.len()])
+            .await
             .map_err(|e| Box::new(e) as DynError)?;
+        let client_ephemeral = &buf[..len];
+        println!("Received initiator's public key: {:?}", client_ephemeral);
 
         // -> e, ee
-        let len = noise
-            .write_message(&[], &mut buf)
+        stream
+            .write_all(key_pair.public.as_ref())
+            .await
             .map_err(|e| Box::new(e) as DynError)?;
-        send(&mut stream, &buf[..len]).await?;
+        let private_key = key_pair.private.as_slice();
+        let ristretto_point = diffie_hellman(private_key, client_ephemeral)?;
+        let dh_secret = ristretto_point.compress().to_bytes();
+        let psk = decode_shared_secret(swarm_key)?;
+        let _shared_secret = mix_keys(&dh_secret, &psk);
 
-        let mut noise = noise
-            .into_transport_mode()
-            .map_err(|e| Box::new(e) as DynError)?;
+        // let mut noise = noise
+        //     .into_transport_mode()
+        //     .map_err(|e| Box::new(e) as DynError)?;
         println!("Server side session established...");
 
         let mut n = 0u32;
@@ -124,26 +125,26 @@ fn start_rust_server(peer_id: &str) -> Result<String, DynError> {
             // Clone the arc to pass it to the spawned task
             let pid = Arc::clone(&pid);
 
-            let msg = recv(&mut stream).await?;
+            // let msg = recv(&mut stream).await?;
 
-            let len = noise
-                .read_message(&msg, &mut buf)
-                .map_err(|e| Box::new(e) as DynError)?;
-            println!(
-                "Client sent message : {}",
-                String::from_utf8_lossy(&buf[..len])
-            );
+            // let len = noise
+            //     .read_message(&msg, &mut buf)
+            //     .map_err(|e| Box::new(e) as DynError)?;
+            // println!(
+            //     "Client sent message : {}",
+            //     String::from_utf8_lossy(&buf[..len])
+            // );
             // Answer with your own peer id
-            let len = noise
-                .write_message(pid.as_bytes(), &mut buf)
-                .map_err(|e| Box::new(e) as DynError)?;
-            send(&mut stream, &buf[..len]).await?;
+            // let len = noise
+            //     .write_message(pid.as_bytes(), &mut buf)
+            //     .map_err(|e| Box::new(e) as DynError)?;
+            // send(&mut stream, &buf[..len]).await?;
             println!("Server answered with its peer id : {}", pid);
-            let hex_string: String = buf[..len]
-                .iter()
-                .map(|byte| format!("{:02x}", byte))
-                .collect();
-            println!("Encrypted message sent to initiator: {}", hex_string);
+            // let hex_string: String = buf[..len]
+            //     .iter()
+            //     .map(|byte| format!("{:02x}", byte))
+            //     .collect();
+            // println!("Encrypted message sent to initiator: {}", hex_string);
 
             println!("Server sleeping for 100 milliseconds");
             tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
@@ -178,31 +179,31 @@ pub extern "C" fn close_server() {
     }
 }
 
-/// Hyper-basic stream transport receiver. 16-bit BE size followed by payload.
-async fn recv(stream: &mut TcpStream) -> Result<Vec<u8>, DynError> {
-    let mut msg_len_buf = [0u8; 2];
-    stream
-        .read_exact(&mut msg_len_buf)
-        .await
-        .map_err(|e| Box::new(e) as DynError)?;
-    let msg_len = ((msg_len_buf[0] as usize) << 8) + (msg_len_buf[1] as usize);
-    let mut msg = vec![0u8; msg_len];
-    stream
-        .read_exact(&mut msg[..])
-        .await
-        .map_err(|e| Box::new(e) as DynError)?;
-    Ok(msg)
-}
+// /// Hyper-basic stream transport receiver. 16-bit BE size followed by payload.
+// async fn recv(stream: &mut TcpStream) -> Result<Vec<u8>, DynError> {
+//     let mut msg_len_buf = [0u8; 2];
+//     stream
+//         .read_exact(&mut msg_len_buf)
+//         .await
+//         .map_err(|e| Box::new(e) as DynError)?;
+//     let msg_len = ((msg_len_buf[0] as usize) << 8) + (msg_len_buf[1] as usize);
+//     let mut msg = vec![0u8; msg_len];
+//     stream
+//         .read_exact(&mut msg[..])
+//         .await
+//         .map_err(|e| Box::new(e) as DynError)?;
+//     Ok(msg)
+// }
 
-/// Hyper-basic stream transport sender. 16-bit BE size followed by payload.
-async fn send(stream: &mut TcpStream, buf: &[u8]) -> Result<(), DynError> {
-    let msg_len_buf = [(buf.len() >> 8) as u8, (buf.len() & 0xff) as u8];
-    stream
-        .write_all(&msg_len_buf)
-        .await
-        .map_err(|e| Box::new(e) as DynError)?;
-    stream
-        .write_all(buf)
-        .await
-        .map_err(|e| Box::new(e) as DynError)
-}
+// /// Hyper-basic stream transport sender. 16-bit BE size followed by payload.
+// async fn send(stream: &mut TcpStream, buf: &[u8]) -> Result<(), DynError> {
+//     let msg_len_buf = [(buf.len() >> 8) as u8, (buf.len() & 0xff) as u8];
+//     stream
+//         .write_all(&msg_len_buf)
+//         .await
+//         .map_err(|e| Box::new(e) as DynError)?;
+//     stream
+//         .write_all(buf)
+//         .await
+//         .map_err(|e| Box::new(e) as DynError)
+// }

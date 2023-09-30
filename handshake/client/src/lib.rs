@@ -1,6 +1,13 @@
+use common::errors::DynError;
+use common::noise::{generate_keypair, diffie_hellman, mix_keys, decode_shared_secret};
+// Connection vor TCP using Noise_NNpsk2_25519_ChaChaPoly_BLAKE2s
+// Some simplifications have been made
+// 1. The server address is hardcoded
+// 2. The proxy address is hardcoded
+// 3. The proxy username and password are hardcoded
+// 5. Nonce will always be derived from [0u8; 12]
+// 6. There is only one protocol Noise_NNpsk2_25519_ChaChaPoly_BLAKE2s
 use lazy_static::lazy_static;
-use snow::params::NoiseParams;
-use snow::Builder;
 use std::ffi::{CStr, CString};
 use std::net::SocketAddr;
 use std::os::raw::c_char;
@@ -26,9 +33,6 @@ struct ServerState {
 
 lazy_static! {
     static ref SERVER_STATE: Mutex<Option<ServerState>> = Mutex::new(None);
-}
-lazy_static! {
-    static ref PARAMS: NoiseParams = "Noise_NN_25519_ChaChaPoly_BLAKE2s".parse().unwrap();
 }
 
 fn convert_to_ffi_result(
@@ -71,6 +75,7 @@ fn start_rust_client(
 ) -> std::result::Result<String, Box<dyn std::error::Error + Send>> {
     let pid = format!("Initiator peer id: {}", peer_id);
     println!("Hello, I am {}", pid);
+    let swarm_key = "b014416087025d9e34862cedb87468f2a2e2b6cd99d288107f87a0641328b351";
     // Create a shutdown signal
     let (shutdown_sender, mut shutdown_receiver) = oneshot::channel();
 
@@ -80,40 +85,35 @@ fn start_rust_client(
 
     let mut buf = vec![0u8; 65535];
 
-    // Initialize our initiator using a builder.
-    let builder: Builder<'_> = Builder::new(PARAMS.clone());
-    let key_pair = builder
-        .generate_keypair()
-        .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
-    let mut noise = builder
-        .local_private_key(key_pair.private.as_slice())
-        .build_initiator()
-        .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+    // Define the target address
+    let proxy_addr: SocketAddr = "172.19.0.3:1080".parse().unwrap();
+    let server_addr: SocketAddr = "172.18.0.2:2000".parse().unwrap();
+    let target = TargetAddr::Ip(server_addr);
 
     let server_handle = Some(rt.spawn(async move {
-        // Connect via SOCKS5 proxy
-        let proxy_addr: SocketAddr = "172.19.0.3:1080".parse().unwrap();
-        let server_addr: SocketAddr = "172.18.0.2:2000".parse().unwrap();
-        let target = TargetAddr::Ip(server_addr);
         let mut stream = Socks5Stream::connect_with_password(proxy_addr, target, "socks", "socks")
             .await
             .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
-        println!("Now connected to server {} via socks proxy at {}", server_addr, proxy_addr);
+        println!(
+            "Now connected to server {} via socks proxy at {}",
+            server_addr, proxy_addr
+        );
 
+        // Generate a new keypair
+        let key_pair = generate_keypair()?;
         // -> e
-        let len = noise
-            .write_message(&[], &mut buf)
-            .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
-        send(&mut stream, &buf[..len]).await?;
+        stream.write_all(key_pair.public.as_ref()).await
+            .map_err(|e| Box::new(e) as DynError)?;
 
         // <- e, ee
-        noise
-            .read_message(&recv(&mut stream).await?, &mut buf)
-            .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
-
-        let mut noise = noise
-            .into_transport_mode()
-            .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+        let len = stream.read_exact(&mut buf[..key_pair.public.len()]).await
+            .map_err(|e| Box::new(e) as DynError)?;
+        let server_ephemeral = &buf[..len];
+        let private_key = key_pair.private.as_slice();
+        let ristretto_point = diffie_hellman(private_key, server_ephemeral)?;
+        let dh_secret = ristretto_point.compress().to_bytes();
+        let psk = decode_shared_secret(swarm_key)?;
+        let _shared_secret = mix_keys(&dh_secret, &psk);
         println!("Client side session established...");
 
         let mut n = 0u32;
@@ -128,9 +128,9 @@ fn start_rust_client(
                 return Ok::<_, Box<dyn std::error::Error + Send>>("Client shutting down".into());
             }
 
-            let len = noise
-                .write_message(pid.as_bytes(), &mut buf)
-                .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+            // let len = noise
+            //     .write_message(pid.as_bytes(), &mut buf)
+            //     .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
             send(&mut stream, &buf[..len]).await?;
             println!("Initiator sent message to listener: {}", pid);
             let hex_string: String = buf[..len]
@@ -139,15 +139,12 @@ fn start_rust_client(
                 .collect();
             println!("Encrypted message sent to listener: {}", hex_string);
 
-            let msg = recv(&mut stream).await?;
+            let _msg = recv(&mut stream).await?;
 
-            let len = noise
-                .read_message(&msg, &mut buf)
-                .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
-            println!(
-                "Server answered : {}",
-                String::from_utf8_lossy(&buf[..len])
-            );
+            // let len = noise
+            //     .read_message(&msg, &mut buf)
+            //     .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+            println!("Server answered : {}", String::from_utf8_lossy(&buf[..len]));
 
             println!("Client sleeping for 100 milliseconds");
             tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
