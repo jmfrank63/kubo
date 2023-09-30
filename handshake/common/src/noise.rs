@@ -2,6 +2,10 @@ extern crate curve25519_dalek;
 extern crate rand;
 
 use crate::errors::DynError;
+use std::task::{Context, Poll};
+use std::time::Duration;
+use std::{cell::RefCell, pin::Pin};
+use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 
 use blake2::{Blake2s256, Digest};
 use chacha20poly1305::{
@@ -15,6 +19,11 @@ use curve25519_dalek::{
     scalar::Scalar,
 };
 use rand::Rng;
+use tokio::time::timeout;
+
+const NONCE_SIZE: usize = 12;
+const MAX_MESSAGE_SIZE: usize = 1024 * 1024 * 1024; // 1 GB
+const RECV_TIMEOUT: Duration = Duration::from_secs(30); // 30 seconds
 
 /// Represents an asymmetric keypair.
 pub struct Keypair {
@@ -24,18 +33,138 @@ pub struct Keypair {
     pub public: Vec<u8>,
 }
 
-use std::task::{Context, Poll};
-use std::{cell::RefCell, pin::Pin};
-use tokio::io::{AsyncRead, AsyncWrite};
+pub trait Stream: AsyncRead + AsyncWrite + Unpin {}
 
-pub struct EncryptedTcpStream {
-    inner: tokio::net::TcpStream,
-    secret: Vec<u8>,       // The shared secret used for encryption/decryption.
-    nonce: RefCell<Nonce>, // The nonce used for encryption/decryption.
+impl<S: AsyncRead + AsyncWrite + Unpin> Stream for S {}
+
+pub struct EncryptedTcpStream<S: Stream> {
+    inner: S,
+    secret: Vec<u8>,
+    nonce: RefCell<Nonce>,
 }
 
-impl EncryptedTcpStream {
-    pub fn new(inner: tokio::net::TcpStream, secret: Vec<u8>) -> Self {
+impl<S: AsyncRead + AsyncWrite + Unpin> EncryptedTcpStream<S> {
+    // ... [other methods like new, encrypt, decrypt] ...
+
+    pub async fn send(&mut self, buf: &[u8]) -> Result<(), Box<dyn std::error::Error + Send>> {
+        // Encrypt the data with the current nonce
+        let encrypted_data = self.encrypt(buf).map_err(|e| Box::new(e) as DynError)?;
+
+        // Fetch and serialize the nonce
+        let combined_data = {
+            let nonce = self.nonce.borrow();
+            let mut combined_data = Vec::new();
+            combined_data.extend_from_slice(&nonce);
+            combined_data.extend_from_slice(&encrypted_data);
+            combined_data
+        };
+
+        // Write the length of the combined data (nonce + encrypted message)
+        let total_len = combined_data.len();
+        let msg_len_buf = [(total_len >> 8) as u8, (total_len & 0xff) as u8];
+        self.inner
+            .write_all(&msg_len_buf)
+            .await
+            .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+
+        // Write the combined data itself
+        self.inner
+            .write_all(&combined_data)
+            .await
+            .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)
+    }
+
+    async fn read_data_from_stream(
+        &mut self,
+    ) -> Result<Vec<u8>, Box<dyn std::error::Error + Send>> {
+        let mut buffer = Vec::new();
+
+        // First, read the length bytes (only two bytes)
+        let mut msg_len_buf = [0u8; 2];
+        self.inner
+            .read_exact(&mut msg_len_buf)
+            .await
+            .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+        let msg_len = ((msg_len_buf[0] as usize) << 8) + (msg_len_buf[1] as usize);
+
+        // Size check to prevent over-allocation
+        if msg_len > MAX_MESSAGE_SIZE {
+            return Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Message too long",
+            )));
+        }
+
+        buffer.resize(msg_len, 0);
+        let mut bytes_read = 0;
+
+        while bytes_read < msg_len {
+            let read_result = self
+                .inner
+                .read(&mut buffer[bytes_read..])
+                .await
+                .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+            if read_result == 0 {
+                return Err(Box::new(std::io::Error::new(
+                    std::io::ErrorKind::UnexpectedEof,
+                    "Unexpected EOF",
+                )));
+            }
+            bytes_read += read_result;
+        }
+
+        Ok(buffer)
+    }
+
+    fn decrypt_received_data(
+        &mut self,
+        buffer: &[u8],
+    ) -> Result<Vec<u8>, Box<dyn std::error::Error + Send>> {
+        // Split the nonce and the encrypted message
+        let (nonce_bytes, encrypted_data) = buffer.split_at(NONCE_SIZE);
+
+        // Update the current nonce to the one from the received data
+        let nonce = {
+            let mut current_nonce = self.nonce.borrow_mut();
+            current_nonce.copy_from_slice(nonce_bytes);
+            current_nonce
+        };
+
+        // Decrypt the received data using the nonce
+        self.decrypt(encrypted_data, &nonce)
+            .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)
+    }
+
+    pub async fn recv(&mut self) -> Result<Vec<u8>, Box<dyn std::error::Error + Send>> {
+        // Set a timeout for the entire receive operation
+        let result = timeout(RECV_TIMEOUT, async {
+            let buffer = self.read_data_from_stream().await?;
+            self.decrypt_received_data(&buffer)
+        })
+        .await;
+
+        // Check the result of the timeout
+        match result {
+            Ok(res) => res,
+            Err(_) => Err(Box::new(std::io::Error::new(
+                std::io::ErrorKind::TimedOut,
+                "Recv operation timed out",
+            ))),
+        }
+    }
+}
+
+impl<S: Stream> EncryptedTcpStream<S> {
+    pub fn new(inner: S, secret: Vec<u8>) -> Self {
+        let nonce = RefCell::new(ChaCha20Poly1305::generate_nonce(&mut OsRng));
+        EncryptedTcpStream {
+            inner,
+            secret,
+            nonce,
+        }
+    }
+
+    pub fn upgrade(inner: S, secret: Vec<u8>) -> Self {
         let nonce = RefCell::new(ChaCha20Poly1305::generate_nonce(&mut OsRng));
         EncryptedTcpStream {
             inner,
@@ -45,13 +174,18 @@ impl EncryptedTcpStream {
     }
 
     pub fn encrypt(&self, data: &[u8]) -> Result<Vec<u8>, chacha20poly1305::Error> {
-        let result = encrypt(&self.secret, data, &self.nonce.borrow());
         self.increment_nonce();
+        let result = encrypt(&self.secret, data, &self.nonce.borrow());
+
         result
     }
 
-    pub fn decrypt(&self, ciphertext: &[u8]) -> Result<Vec<u8>, chacha20poly1305::Error> {
-        decrypt(&self.secret, ciphertext, &self.nonce.borrow())
+    pub fn decrypt(
+        &self,
+        ciphertext: &[u8],
+        nonce: &Nonce,
+    ) -> Result<Vec<u8>, chacha20poly1305::Error> {
+        decrypt(&self.secret, ciphertext, nonce)
     }
 
     fn increment_nonce(&self) {
@@ -66,23 +200,35 @@ impl EncryptedTcpStream {
     }
 }
 
-impl AsyncRead for EncryptedTcpStream {
+impl<S: Stream> AsyncRead for EncryptedTcpStream<S> {
     fn poll_read(
         mut self: Pin<&mut Self>,
         cx: &mut Context<'_>,
         buf: &mut tokio::io::ReadBuf<'_>,
     ) -> Poll<std::io::Result<()>> {
-        let mut temp_buf = vec![0u8; buf.remaining()];
+        // Buffer to hold the nonce and the encrypted data
+        let mut temp_buf = vec![0u8; NONCE_SIZE + buf.remaining()];
+
+        // Read the nonce and the encrypted data
         let mut temp_read_buf = tokio::io::ReadBuf::new(&mut temp_buf);
         let inner_poll = Pin::new(&mut self.inner).poll_read(cx, &mut temp_read_buf);
+
         match inner_poll {
             Poll::Ready(Ok(_)) => {
-                // Adjusting the decrypt call to match the provided signature
-                let decrypted_data = self.decrypt( &temp_buf)
-                    .map_err(|_| {
-                        std::io::Error::new(std::io::ErrorKind::InvalidData, "Decryption failed")
-                    })?;
+                // Split the temp_buf into nonce and data parts
+                let (nonce, encrypted_data) = temp_buf.split_at(NONCE_SIZE);
+
+                // Convert the nonce slice into your Nonce type
+                let nonce = Nonce::from_slice(nonce); // Assuming Nonce has such a method
+
+                // Now, decrypt using the nonce and the encrypted data
+                let decrypted_data = self.decrypt(encrypted_data, nonce).map_err(|_| {
+                    std::io::Error::new(std::io::ErrorKind::InvalidData, "Decryption failed")
+                })?;
+
+                // Put the decrypted data into the provided buffer
                 buf.put_slice(&decrypted_data);
+
                 Poll::Ready(Ok(()))
             }
             Poll::Ready(Err(e)) => Poll::Ready(Err(e)),
@@ -91,13 +237,13 @@ impl AsyncRead for EncryptedTcpStream {
     }
 }
 
-impl AsyncWrite for EncryptedTcpStream {
+impl<S: Stream> AsyncWrite for EncryptedTcpStream<S> {
     fn poll_write(
         mut self: Pin<&mut Self>,
         cx: &mut Context<'_>,
         buf: &[u8],
     ) -> Poll<std::io::Result<usize>> {
-        let encrypted_data = self.encrypt( buf).map_err(|_| {
+        let encrypted_data = self.encrypt(buf).map_err(|_| {
             std::io::Error::new(std::io::ErrorKind::InvalidData, "Encryption failed")
         })?;
         Pin::new(&mut self.inner).poll_write(cx, &encrypted_data)
@@ -203,6 +349,8 @@ pub fn encrypt(
 ) -> Result<Vec<u8>, chacha20poly1305::Error> {
     let key = chacha20poly1305::Key::from_slice(secret); // Our shared secret
     let cipher = ChaCha20Poly1305::new(key);
+    println!("key: {:?}", key);
+    println!("en nonce: {:?}", nonce);
     cipher.encrypt(nonce, data)
 }
 
@@ -222,8 +370,11 @@ pub fn decrypt(
     ciphertext: &[u8],
     nonce: &Nonce,
 ) -> Result<Vec<u8>, chacha20poly1305::Error> {
-    let key = chacha20poly1305::Key::from_slice(secret); // Our shared secret
+    let key = chacha20poly1305::Key::from_slice(secret);
+    println!("key: {:?}", key);
+    println!("de nonce: {:?}", nonce);
     let cipher = ChaCha20Poly1305::new(key);
+    println!("ciphertext: {:?}", ciphertext);
     cipher.decrypt(nonce, ciphertext)
 }
 
@@ -421,5 +572,38 @@ mod tests {
             result.is_err(),
             "Expected an error when decrypting with a wrong secret"
         );
+    }
+
+    #[tokio::test]
+    async fn test_basic_encryption_decryption() {
+        let secret = b"test_secret_padded_with_zeros_!!".to_vec();
+
+        let (stream1, stream2) = tokio::io::duplex(43);
+
+        let mut encrypted_stream1 = EncryptedTcpStream::new(stream1, secret.clone());
+        let mut encrypted_stream2 = EncryptedTcpStream::new(stream2, secret.clone());
+
+        let test_data = b"Hello, World!".to_vec();
+
+        // Send data through the first stream
+        encrypted_stream1
+            .send(&test_data)
+            .await
+            .expect("Failed to send data");
+
+        // Receive and decrypt data from the second stream
+        let received_data = encrypted_stream2
+            .recv()
+            .await
+            .expect("Failed to receive data");
+
+        // Ensure the received data matches the original
+        assert_eq!(received_data, test_data);
+
+        //     let encrypted_data = encrypted_stream2.encrypt(&test_data).unwrap();
+        //     assert_ne!(encrypted_data, test_data);
+
+        //     let decrypted_data = encrypted_stream1.decrypt(&encrypted_data).unwrap();
+        //     assert_eq!(decrypted_data, test_data);
     }
 }

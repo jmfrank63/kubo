@@ -1,19 +1,17 @@
 use common::errors::DynError;
-use common::noise::{generate_keypair, diffie_hellman, mix_keys, decode_shared_secret};
+use common::noise::{generate_keypair, diffie_hellman, mix_keys, decode_shared_secret, EncryptedTcpStream};
 // Connection vor TCP using Noise_NNpsk2_25519_ChaChaPoly_BLAKE2s
 // Some simplifications have been made
 // 1. The server address is hardcoded
 // 2. The proxy address is hardcoded
 // 3. The proxy username and password are hardcoded
-// 5. Nonce will always be derived from [0u8; 12]
-// 6. There is only one protocol Noise_NNpsk2_25519_ChaChaPoly_BLAKE2s
+// 4. There is only one protocol Noise_NNpsk2_25519_ChaChaPoly_BLAKE2s
 use lazy_static::lazy_static;
 use std::ffi::{CStr, CString};
 use std::net::SocketAddr;
 use std::os::raw::c_char;
 use std::sync::Mutex;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::net::TcpStream;
 use tokio::sync::oneshot;
 use tokio_socks::tcp::Socks5Stream;
 use tokio_socks::TargetAddr;
@@ -109,11 +107,14 @@ fn start_rust_client(
         let len = stream.read_exact(&mut buf[..key_pair.public.len()]).await
             .map_err(|e| Box::new(e) as DynError)?;
         let server_ephemeral = &buf[..len];
+
         let private_key = key_pair.private.as_slice();
         let ristretto_point = diffie_hellman(private_key, server_ephemeral)?;
         let dh_secret = ristretto_point.compress().to_bytes();
         let psk = decode_shared_secret(swarm_key)?;
-        let _shared_secret = mix_keys(&dh_secret, &psk);
+        let shared_secret = mix_keys(&dh_secret, &psk);
+
+        let mut encrypted_stream = EncryptedTcpStream::upgrade(stream, shared_secret);
         println!("Client side session established...");
 
         let mut n = 0u32;
@@ -128,10 +129,9 @@ fn start_rust_client(
                 return Ok::<_, Box<dyn std::error::Error + Send>>("Client shutting down".into());
             }
 
-            // let len = noise
-            //     .write_message(pid.as_bytes(), &mut buf)
-            //     .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
-            send(&mut stream, &buf[..len]).await?;
+            encrypted_stream.write_all(pid.as_bytes()).await
+                .map_err(|e| Box::new(e) as DynError)?;
+
             println!("Initiator sent message to listener: {}", pid);
             let hex_string: String = buf[..len]
                 .iter()
@@ -139,7 +139,7 @@ fn start_rust_client(
                 .collect();
             println!("Encrypted message sent to listener: {}", hex_string);
 
-            let _msg = recv(&mut stream).await?;
+            // let _msg = recv(&mut stream).await?;
 
             // let len = noise
             //     .read_message(&msg, &mut buf)
@@ -179,31 +179,31 @@ pub extern "C" fn close_server() {
     }
 }
 
-/// Hyper-basic stream transport receiver. 16-bit BE size followed by payload.
-async fn recv(stream: &mut TcpStream) -> Result<Vec<u8>, Box<dyn std::error::Error + Send>> {
-    let mut msg_len_buf = [0u8; 2];
-    stream
-        .read_exact(&mut msg_len_buf)
-        .await
-        .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
-    let msg_len = ((msg_len_buf[0] as usize) << 8) + (msg_len_buf[1] as usize);
-    let mut msg = vec![0u8; msg_len];
-    stream
-        .read_exact(&mut msg[..])
-        .await
-        .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
-    Ok(msg)
-}
+// /// Hyper-basic stream transport receiver. 16-bit BE size followed by payload.
+// async fn recv(stream: &mut TcpStream) -> Result<Vec<u8>, Box<dyn std::error::Error + Send>> {
+//     let mut msg_len_buf = [0u8; 2];
+//     stream
+//         .read_exact(&mut msg_len_buf)
+//         .await
+//         .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+//     let msg_len = ((msg_len_buf[0] as usize) << 8) + (msg_len_buf[1] as usize);
+//     let mut msg = vec![0u8; msg_len];
+//     stream
+//         .read_exact(&mut msg[..])
+//         .await
+//         .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+//     Ok(msg)
+// }
 
-/// Hyper-basic stream transport sender. 16-bit BE size followed by payload.
-async fn send(stream: &mut TcpStream, buf: &[u8]) -> Result<(), Box<dyn std::error::Error + Send>> {
-    let msg_len_buf = [(buf.len() >> 8) as u8, (buf.len() & 0xff) as u8];
-    stream
-        .write_all(&msg_len_buf)
-        .await
-        .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
-    stream
-        .write_all(buf)
-        .await
-        .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)
-}
+// /// Hyper-basic stream transport sender. 16-bit BE size followed by payload.
+// async fn send(stream: &mut TcpStream, buf: &[u8]) -> Result<(), Box<dyn std::error::Error + Send>> {
+//     let msg_len_buf = [(buf.len() >> 8) as u8, (buf.len() & 0xff) as u8];
+//     stream
+//         .write_all(&msg_len_buf)
+//         .await
+//         .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)?;
+//     stream
+//         .write_all(buf)
+//         .await
+//         .map_err(|e| Box::new(e) as Box<dyn std::error::Error + Send>)
+// }
