@@ -79,6 +79,7 @@ func (*serverPlugin) Start(api coreiface.CoreAPI) error {
 
 func (*serverPlugin) Close() error {
 	fmt.Println("Goodbye from Server Plugin!")
+    C.close_server()
 	return nil
 }
 

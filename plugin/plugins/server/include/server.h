@@ -10,5 +10,6 @@ typedef struct
 } Result;
 
 Result *start_server(const char *peerID);
+void close_server(void);
 
 #endif // SERVER_H

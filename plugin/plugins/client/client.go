@@ -80,6 +80,7 @@ func (*clientPlugin) Start(api coreiface.CoreAPI) error {
 
 func (*clientPlugin) Close() error {
 	fmt.Println("Goodbye from Client Plugin!")
+    C.close_client()
 	return nil
 }
 

@@ -1,24 +1,16 @@
-/// This code works but is intentionally left in an earlier development stage
-/// to show the evolution of the code.
-/// It is functional, but is missing production modifications like full error handling
-/// abstractions for testing and refactoring.
 use common::errors::HandshakeError;
-use common::noise::{
-    decode_shared_secret, diffie_hellman, generate_keypair, mix_keys, EncryptedTcpStream,
+use common::handshake::HandshakeStream;
+use common::noise::{generate_keypair, EncryptedTcpStream};
+use common::{
+    convert_rust_result_to_ffi_result, generate_shared_secret, FFIResult, SERVER_ADDR, SWARM_KEY,
 };
 use lazy_static::lazy_static;
 use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
-use std::sync::{Arc, Mutex};
+use std::sync::Mutex;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::net::TcpListener;
+use tokio::net::{TcpListener, TcpStream};
 use tokio::sync::oneshot;
-
-#[repr(C)]
-pub struct FFIResult {
-    pub data: *mut c_char,
-    pub error: *mut c_char,
-}
 
 struct ServerState {
     runtime: tokio::runtime::Runtime,
@@ -30,18 +22,6 @@ lazy_static! {
     static ref SERVER_STATE: Mutex<Option<ServerState>> = Mutex::new(None);
 }
 
-fn convert_to_ffi_result(res: Result<String, HandshakeError>) -> *mut FFIResult {
-    match res {
-        Ok(data) => Box::into_raw(Box::new(FFIResult {
-            data: CString::new(data).unwrap().into_raw(),
-            error: std::ptr::null_mut(),
-        })),
-        Err(e) => Box::into_raw(Box::new(FFIResult {
-            data: std::ptr::null_mut(),
-            error: CString::new(e.to_string()).unwrap().into_raw(),
-        })),
-    }
-}
 /// # Safety
 ///
 /// This function is unsafe because it dereferences a raw pointer.
@@ -54,95 +34,52 @@ pub unsafe extern "C" fn start_server(peer_id: *const c_char) -> *mut FFIResult 
         Err(_) => {
             return Box::into_raw(Box::new(FFIResult {
                 data: std::ptr::null_mut(),
-                error: CString::new("Invalid peer id format").unwrap().into_raw(),
-            }))
+                error: CString::new("Invalid peer id format")
+                    .expect("Failed to create CString")
+                    .into_raw(),
+            }));
         }
     };
     let result = start_rust_server(peer_id);
-    convert_to_ffi_result(result)
+    convert_rust_result_to_ffi_result(result)
 }
 
+// Rust entry point free of any FFI ))
 fn start_rust_server(peer_id: &str) -> Result<String, HandshakeError> {
-    let pid = Arc::new(format!("Listener peer id: {}", peer_id));
+    let pid = format!("Listener peer id: {}", peer_id);
     println!("Hello, I am {}", pid);
-    let swarm_key = "/key/swarm/psk/1.0.0/
-/base16/
-b014416087025d9e34862cedb87468f2a2e2b6cd99d288107f87a0641328b351
-";
+
     // Create a shutdown signal
-    let (shutdown_sender, mut shutdown_receiver) = oneshot::channel();
+    let (shutdown_sender, shutdown_receiver) = oneshot::channel();
 
     // Create the tokio runtime
     let rt = tokio::runtime::Runtime::new()?;
 
-    let mut buf = vec![0u8; 65535];
-
+    // Listen to the client
     let server_handle = Some(rt.spawn(async move {
-        // Bind to listener address and port
-        let listener = TcpListener::bind("172.18.0.2:2000").await?;
-        println!("Listening on: {}", listener.local_addr().unwrap());
-
-        // Await a connection and read the message
-        let (mut stream, addr) = listener.accept().await?;
-        println!("Got connection from: {:?}", addr);
-
-        // Generate a new keypair
-        let key_pair = generate_keypair()?;
-        println!("Server generated keypair {:?}", key_pair);
-        // <- e
-        let len = stream.read_exact(&mut buf[..key_pair.public.len()]).await?;
-        println!("Server received something");
-        let client_ephemeral = &buf[..len];
-        println!("Server received {} bytes", len);
-        println!("Server received {:?}", client_ephemeral);
-
-        // -> e, ee
-        stream.write_all(key_pair.public.as_ref()).await?;
-        println!("Server sent ephemeral public key to client");
-        let private_key = key_pair.private.as_slice();
-        let ristretto_point = diffie_hellman(private_key, client_ephemeral)?;
-        let dh_secret = ristretto_point.compress().to_bytes();
-        let psk = decode_shared_secret(swarm_key)?;
-        let shared_secret = mix_keys(&dh_secret, &psk);
-        println!("Shared secret: {:?}", shared_secret);
-        let mut encrypted_stream = EncryptedTcpStream::upgrade(stream, shared_secret);
-        println!("Server side session established...");
-
-        let mut n = 0u32;
-
-        loop {
-            n += 1;
-            println!("Server loop iteration: {}", n);
-            // Check for shutdown signal inside your main loop:
-            if let Ok(_) | Err(oneshot::error::TryRecvError::Closed) = shutdown_receiver.try_recv()
-            {
-                println!("Received shutdown signal");
-                return Ok::<_, HandshakeError>("Server shutting down".into());
-            }
-            // Clone the arc to pass it to the spawned task
-            let pid = Arc::clone(&pid);
-
-            let msg = encrypted_stream.recv().await?;
-            // let msg = recv(&mut stream).await?;
-
-            println!("Client sent message : {}", String::from_utf8_lossy(&msg));
-            // Answer with your own peer id
-            encrypted_stream.send(pid.as_bytes()).await?;
-            println!("Server answered with its peer id : {}", pid);
-
-            println!("Server sleeping for 1000 milliseconds");
-            tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
-        }
+        let stream = listen_to_client().await?;
+        let encrypted_stream = perform_server_handshake(stream).await?;
+        handle_server_communication(encrypted_stream, &pid, shutdown_receiver).await
     }));
 
-    // Store the runtime, shutdown signal, and server handle in the global state
+    // Store the runtime, shutdown signal, and server handle in a global state
     {
-        let mut server_state = SERVER_STATE.lock().unwrap();
-        *server_state = Some(ServerState {
-            runtime: rt,
-            shutdown_signal: Some(shutdown_sender),
-            server_handle,
-        });
+        let server_state_result = SERVER_STATE.lock();
+        match server_state_result {
+            Ok(mut server_state) => {
+                *server_state = Some(ServerState {
+                    runtime: rt,
+                    shutdown_signal: Some(shutdown_sender),
+                    server_handle,
+                });
+            }
+            Err(_) => {
+                return Err(HandshakeError::from(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    "Runtime mutex error",
+                )));
+            }
+        }
     }
     Ok("Listener runtime sucessfully started".into())
 }
@@ -165,4 +102,132 @@ pub extern "C" fn close_server() {
             let _ = state.runtime.block_on(server_handle);
         }
     }
+}
+
+async fn handle_server_communication<T: HandshakeStream>(
+    mut encrypted_stream: EncryptedTcpStream<T>,
+    pid: &str,
+    mut shutdown_receiver: tokio::sync::oneshot::Receiver<()>,
+) -> Result<String, HandshakeError> {
+    let mut counter = 0u32;
+    loop {
+        // Check for shutdown signal inside your main loop:
+        if let Ok(_) | Err(oneshot::error::TryRecvError::Closed) = shutdown_receiver.try_recv() {
+            println!("Received shutdown signal");
+            return Ok::<_, HandshakeError>("Server shutting down".into());
+        }
+
+        let msg = encrypted_stream.recv().await?;
+        println!("Client sent: {}", String::from_utf8_lossy(&msg));
+
+        // Answer with your own peer id
+        encrypted_stream.send(pid.as_bytes()).await?;
+        println!("Server answered: {}", pid);
+
+        tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
+        counter += 1;
+        println!("Server loop iteration: {}", counter);
+    }
+}
+
+async fn perform_server_handshake<S: HandshakeStream>(
+    mut stream: S,
+) -> Result<EncryptedTcpStream<S>, HandshakeError> {
+    let mut buf = vec![0u8; 65535];
+
+    // Generate a new keypair
+    let key_pair = generate_keypair()?;
+
+    // <- e
+    let len = stream.read_exact(&mut buf[..key_pair.public.len()]).await?;
+    let client_ephemeral = &buf[..len];
+
+    // -> e
+    stream.write_all(key_pair.public.as_ref()).await?;
+    println!("Server sent ephemeral public key to client");
+
+    // ee
+    let shared_secret = generate_shared_secret(client_ephemeral, key_pair, SWARM_KEY)?;
+
+    Ok(EncryptedTcpStream::upgrade(stream, shared_secret))
+}
+
+async fn listen_to_client() -> Result<TcpStream, HandshakeError> {
+    let listener = TcpListener::bind(SERVER_ADDR).await?;
+    let (stream, _) = listener.accept().await?;
+    Ok(stream)
+}
+
+#[cfg(test)]
+mod server_tests {
+    use super::*;
+    use common::mock::ServerMockStream;
+
+    #[cfg(test)]
+    async fn accept_from_client() -> Result<ServerMockStream, HandshakeError> {
+        // Simulate a client connecting to the server
+        let socket_addr = SERVER_ADDR.parse().unwrap();
+        ServerMockStream::accept(socket_addr)
+    }
+
+    #[tokio::test]
+    async fn test_accept_from_client() {
+        let result: Result<ServerMockStream, HandshakeError> = accept_from_client().await;
+        assert!(result.is_ok());
+
+        let mock_stream = result.unwrap();
+
+        assert_eq!(mock_stream.recv_data.len(), 0);
+        assert_eq!(
+            mock_stream.server_addr,
+            Some(SERVER_ADDR.parse().unwrap())
+        );
+    }
+
+    #[tokio::test]
+    async fn test_unencrypted_pid_exchange() {
+        let mut mock_stream = ServerMockStream::default();
+
+        let mut receive_buffer = vec![0; 32];
+
+        let result = mock_stream.read_exact(&mut receive_buffer).await;
+
+        match result {
+            Ok(_) => {
+                assert_eq!(receive_buffer, vec![0; 32]);
+            }
+            Err(e) => {
+                assert_eq!(e.kind(), std::io::ErrorKind::UnexpectedEof);
+            }
+        }
+
+        // Simulate sending pid
+        mock_stream.write_all(&[0; 32]).await.unwrap();
+        mock_stream.set_reply(vec![1; 32]);
+
+        // Try reading the reply
+        mock_stream.read_exact(&mut receive_buffer).await.unwrap();
+
+        assert_eq!(receive_buffer, vec![1; 32]);
+    }
+
+    #[tokio::test]
+    async fn test_perform_handshake() {
+        // Setup mock stream
+        let mut mock_stream = ServerMockStream::default();
+
+        // Set expected reply for when the client sends its public key.
+        // This is a simulated ephemeral key from the server.
+        mock_stream.set_reply(vec![2; 32]); // just an example value
+
+        // Execute the handshake
+        let result = perform_server_handshake(mock_stream).await;
+
+        // Verify
+        assert!(result.is_ok(), "Handshake should be successful");
+
+        // Further assertions can be made based on expected states or behaviors,
+        // such as checking if the correct shared secret was generated.
+    }
+
 }

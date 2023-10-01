@@ -25,12 +25,10 @@ use common::{
     SERVER_ADDR, SWARM_KEY,
 };
 
-use futures::Future;
 use lazy_static::lazy_static;
 use std::ffi::{CStr, CString};
 use std::net::SocketAddr;
 use std::os::raw::c_char;
-use std::pin::Pin;
 use std::sync::Mutex;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
@@ -38,14 +36,14 @@ use tokio::sync::oneshot;
 use tokio_socks::tcp::Socks5Stream;
 use tokio_socks::TargetAddr;
 
-struct ServerState {
+struct ClientState {
     runtime: tokio::runtime::Runtime,
     shutdown_signal: Option<oneshot::Sender<()>>,
-    server_handle: Option<tokio::task::JoinHandle<Result<String, HandshakeError>>>,
+    client_handle: Option<tokio::task::JoinHandle<Result<String, HandshakeError>>>,
 }
 
 lazy_static! {
-    static ref SERVER_STATE: Mutex<Option<ServerState>> = Mutex::new(None);
+    static ref CLIENT_STATE: Mutex<Option<ClientState>> = Mutex::new(None);
 }
 
 /// # Safety
@@ -63,30 +61,69 @@ pub unsafe extern "C" fn start_client(peer_id: *const c_char) -> *mut FFIResult 
                 error: CString::new("Invalid peer id format")
                     .expect("Failed to create CString")
                     .into_raw(),
-            }))
+            }));
         }
     };
     let result = start_rust_client(peer_id);
     convert_rust_result_to_ffi_result(result)
 }
 
-/// Shuts down the active server instance.
+// We now have FFI out of the way and can focus on the Rust implementation.
+fn start_rust_client(peer_id: &str) -> Result<String, HandshakeError> {
+    let pid = format!("Initiator peer id: {}", peer_id);
+    println!("Hello, I am {}", pid);
+    // Create a shutdown signal
+    let (shutdown_sender, shutdown_receiver) = oneshot::channel();
+
+    // Create the tokio runtime
+    let rt = tokio::runtime::Runtime::new()?;
+
+    // Connect to the server via a socks proxy
+    let client_handle = Some(rt.spawn(async move {
+        let stream = connect_to_server().await?;
+        let encrypted_stream = perform_client_handshake(stream).await?;
+        handle_client_communication(encrypted_stream, &pid, shutdown_receiver).await
+    }));
+
+    // Store the runtime, shutdown signal, and client handle in a global state
+    {
+        let client_state_result = CLIENT_STATE.lock();
+        match client_state_result {
+            Ok(mut client_state) => {
+                *client_state = Some(ClientState {
+                    runtime: rt,
+                    shutdown_signal: Some(shutdown_sender),
+                    client_handle,
+                });
+            }
+            Err(_) => {
+                return Err(HandshakeError::from(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    "Runtime mutex error",
+                )));
+            }
+        }
+    }
+    Ok("Initiator runtime sucessfully started".into())
+}
+
+/// Shuts down the active client instance.
 ///
-/// This function sends a shutdown signal to the server task, waits for it to
+/// This function sends a shutdown signal to the client task, waits for it to
 /// finish its operations, and releases its resources.
 #[no_mangle]
-pub extern "C" fn close_server() {
-    let server_state_result = SERVER_STATE.lock();
-    match server_state_result {
-        Ok(mut server_state) => {
-            if let Some(state) = &mut *server_state {
+pub extern "C" fn close_client() {
+    let client_state_result = CLIENT_STATE.lock();
+    match client_state_result {
+        Ok(mut client_state) => {
+            if let Some(state) = &mut *client_state {
                 if let Some(shutdown_sender) = state.shutdown_signal.take() {
                     let _ = shutdown_sender.send(());
                 }
 
-                // Ensure the server task is completed
-                if let Some(server_handle) = state.server_handle.take() {
-                    let _ = state.runtime.block_on(server_handle);
+                // Ensure the client task is completed
+                if let Some(client_handle) = state.client_handle.take() {
+                    let _ = state.runtime.block_on(client_handle);
                 }
             }
         }
@@ -100,36 +137,7 @@ pub extern "C" fn close_server() {
     }
 }
 
-trait Connectable: AsyncReadExt + AsyncWriteExt {
-    fn connect_with_password(
-        proxy_addr: SocketAddr,
-        target: TargetAddr,
-        username: &str,
-        password: &str,
-    ) -> Pin<Box<dyn Future<Output = Result<Self, HandshakeError>>>>
-    where
-        Self: Sized;
-}
-
-impl Connectable for Socks5Stream<tokio::net::TcpStream> {
-    fn connect_with_password(
-        proxy_addr: SocketAddr,
-        target: TargetAddr,
-        username: &str,
-        password: &str,
-    ) -> Pin<Box<dyn Future<Output = Result<Self, HandshakeError>>>> {
-        let target_addr = target.to_owned();
-        let username = username.to_owned();
-        let password = password.to_owned();
-        Box::pin(async move {
-            Socks5Stream::connect_with_password(proxy_addr, target_addr, &username, &password)
-                .await
-                .map_err(HandshakeError::from)
-        })
-    }
-}
-
-async fn connect_to_server() -> Result<Socks5Stream<tokio::net::TcpStream>, HandshakeError> {
+async fn connect_to_server() -> Result<Socks5Stream<TcpStream>, HandshakeError> {
     let proxy_addr: SocketAddr = PROXY_ADDR.parse().expect("Invalid proxy address");
     let server_addr: SocketAddr = SERVER_ADDR.parse().expect("Invalid server address");
     let target = TargetAddr::Ip(server_addr);
@@ -138,7 +146,7 @@ async fn connect_to_server() -> Result<Socks5Stream<tokio::net::TcpStream>, Hand
         .map_err(HandshakeError::from)
 }
 
-async fn perform_handshake<S: HandshakeStream>(
+async fn perform_client_handshake<S: HandshakeStream>(
     mut stream: S,
 ) -> Result<EncryptedTcpStream<S>, HandshakeError> {
     let mut buf = vec![0u8; 65535];
@@ -162,9 +170,10 @@ async fn perform_handshake<S: HandshakeStream>(
 
 async fn handle_client_communication<T: HandshakeStream>(
     mut encrypted_stream: EncryptedTcpStream<T>,
-    pid: String,
+    pid: &str,
     mut shutdown_receiver: tokio::sync::oneshot::Receiver<()>,
 ) -> Result<String, HandshakeError> {
+    let mut counter = 0u32;
     loop {
         // Check for shutdown signal inside your main loop:
         if let Ok(_) | Err(oneshot::error::TryRecvError::Closed) = shutdown_receiver.try_recv() {
@@ -180,72 +189,28 @@ async fn handle_client_communication<T: HandshakeStream>(
         let msg = encrypted_stream.recv().await?;
         println!("Server answered: {}", String::from_utf8_lossy(&msg));
 
-        println!("Client sleeping for {} milliseconds", LOOP_DELAY);
         tokio::time::sleep(tokio::time::Duration::from_millis(LOOP_DELAY)).await;
+        counter += 1;
+        println!("Client loop iteration: {}", counter);
     }
-}
-
-// We now have FFI out of the way and can focus on the Rust implementation.
-fn start_rust_client(peer_id: &str) -> Result<String, HandshakeError> {
-    let pid = format!("Initiator peer id: {}", peer_id);
-    println!("Hello, I am {}", pid);
-    // Create a shutdown signal
-    let (shutdown_sender, shutdown_receiver) = oneshot::channel();
-
-    // Create the tokio runtime
-    let rt = tokio::runtime::Runtime::new()?;
-
-    // Connect to the server via a socks proxy
-    let server_handle = Some(rt.spawn(async move {
-        let stream = connect_to_server().await?;
-        println!(
-            "Now connected to server {} via proxy {}",
-            SERVER_ADDR, PROXY_ADDR
-        );
-
-        let encrypted_stream = perform_handshake(stream).await?;
-
-        handle_client_communication(encrypted_stream, pid, shutdown_receiver).await
-    }));
-
-    // Store the runtime, shutdown signal, and server handle in a global state
-    {
-        let server_state_result = SERVER_STATE.lock();
-        match server_state_result {
-            Ok(mut server_state) => {
-                *server_state = Some(ServerState {
-                    runtime: rt,
-                    shutdown_signal: Some(shutdown_sender),
-                    server_handle,
-                });
-            }
-            Err(_) => {
-                return Err(HandshakeError::from(std::io::Error::new(
-                    std::io::ErrorKind::Other,
-                    "Runtime mutex error",
-                )));
-            }
-        }
-    }
-    Ok("Initiator runtime sucessfully started".into())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use common::mock::MockStream;
+    use common::mock::ClientMockStream;
 
     #[cfg(test)]
-    async fn connect_to_server() -> Result<MockStream, HandshakeError> {
+    async fn connect_to_server() -> Result<ClientMockStream, HandshakeError> {
         let proxy_addr: SocketAddr = PROXY_ADDR.parse().expect("Invalid proxy address");
         let server_addr: SocketAddr = SERVER_ADDR.parse().expect("Invalid server address");
         let target = TargetAddr::Ip(server_addr);
-        MockStream::connect_with_password(proxy_addr, target, "socks", "socks")
+        ClientMockStream::connect_with_password(proxy_addr, target, "socks", "socks")
     }
 
     #[tokio::test]
     async fn test_connect_to_server() {
-        let result: Result<MockStream, HandshakeError> = connect_to_server().await; // Explicitly mention the type
+        let result: Result<ClientMockStream, HandshakeError> = connect_to_server().await; // Explicitly mention the type
         assert!(result.is_ok());
 
         let mock_stream = result.unwrap();
@@ -264,8 +229,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_pid_exchange() {
-        let mut mock_stream = MockStream::default();
+    async fn test_unencrypted_pid_exchange() {
+        let mut mock_stream = ClientMockStream::default();
         let mut receive_buffer = vec![0; 32];
 
         // Simultate reading without anything send
@@ -293,14 +258,14 @@ mod tests {
     #[tokio::test]
     async fn test_perform_handshake() {
         // Setup mock stream
-        let mut mock_stream = MockStream::default();
+        let mut mock_stream = ClientMockStream::default();
 
         // Set expected reply for when the client sends its public key.
         // This is a simulated ephemeral key from the server.
         mock_stream.set_reply(vec![2; 32]); // just an example value
 
         // Execute the handshake
-        let result = perform_handshake(mock_stream).await;
+        let result = perform_client_handshake(mock_stream).await;
 
         // Verify
         assert!(result.is_ok(), "Handshake should be successful");

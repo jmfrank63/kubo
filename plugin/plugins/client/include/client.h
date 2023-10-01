@@ -10,5 +10,6 @@ typedef struct
 } Result;
 
 Result *start_client(const char *peerID);
+void close_client(void);
 
 #endif // CLIENT_H

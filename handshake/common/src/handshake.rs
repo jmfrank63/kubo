@@ -4,3 +4,5 @@ use tokio::io::{AsyncRead, AsyncWrite};
 pub trait HandshakeStream: AsyncRead + AsyncWrite + Unpin + Send {}
 
 impl HandshakeStream for Socks5Stream<tokio::net::TcpStream> {}
+
+impl HandshakeStream for tokio::net::TcpStream {}
