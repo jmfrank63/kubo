@@ -5,7 +5,7 @@ use std::{
     task::{Context, Poll},
 };
 
-use crate::{errors::HandshakeError, handshake::HandshakeStream, noise::EncryptedTcpStream};
+use crate::{errors::HandshakeError, handshake::HandshakeStream};
 use tokio::{
     io::{self, AsyncRead, AsyncWrite},
     net::{TcpListener, TcpStream},
@@ -201,17 +201,25 @@ impl Connectable for ClientMockStream {
     }
 }
 
-impl EncryptedTcpStream<ClientMockStream> {
-    pub fn set_reply(&mut self, data: Vec<u8>) {
-        self.inner.recv_data = data;
-    }
-}
 
-impl EncryptedTcpStream<ServerMockStream> {
-    pub fn set_reply(&mut self, data: Vec<u8>) {
-        self.inner.recv_data = data;
-    }
-}
+// #[cfg(test)]
+// impl EncryptedTcpStream<ServerMockStream> {
+//     pub fn set_reply(&mut self, data: Vec<u8>) {
+//         self.get_mut().recv_data = data;
+//     }
+// }
+
+// #[cfg(test)]
+// impl EncryptedTcpStream<ClientMockStream> {
+//     pub fn set_reply(&mut self, data: Vec<u8>) {
+//         self.get_mut().recv_data = data;
+//     }
+
+//     #[cfg(test)]
+//     pub fn get_client_nonce(&self) -> Nonce {
+//         self.get_nonce()
+//     }
+// }
 
 impl Acceptable for ServerMockStream {
     fn accept(

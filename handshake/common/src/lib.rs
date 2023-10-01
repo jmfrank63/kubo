@@ -8,6 +8,7 @@ use std::ffi::{c_char, CString};
 use errors::HandshakeError;
 use noise::{Keypair, diffie_hellman, decode_shared_secret, mix_keys};
 
+pub const TEST_SECRET: &[u8] = b"This is a very very secret key!!";
 pub const LOOP_DELAY: u64 = 1000;
 pub const PROXY_ADDR: &str = "172.19.0.3:1080";
 pub const SERVER_ADDR: &str = "172.18.0.2:2000";

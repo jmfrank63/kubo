@@ -2,6 +2,7 @@ extern crate curve25519_dalek;
 extern crate rand;
 
 use crate::errors::HandshakeError;
+
 use std::os::fd::AsRawFd;
 use std::task::{Context, Poll};
 use std::time::Duration;
@@ -41,7 +42,7 @@ pub struct Keypair {
 }
 
 #[derive(Debug)]
-enum ReadState {
+pub enum ReadState {
     ReadingLength,
     ReadingData(usize), // usize stores the expected message length
 }
@@ -52,7 +53,7 @@ impl<S: AsyncRead + AsyncWrite + Unpin> Stream for S {}
 
 #[derive(Debug)]
 pub struct EncryptedTcpStream<S: Stream> {
-    pub inner: S,
+    inner: S,
     secret: Vec<u8>,
     nonce: RefCell<Nonce>,
     read_state: ReadState,
@@ -223,6 +224,7 @@ impl<S: Stream> EncryptedTcpStream<S> {
             }
         }
     }
+
 }
 
 impl<S: Stream> AsyncRead for EncryptedTcpStream<S> {
@@ -442,7 +444,6 @@ fn slice_to_array(slice: &[u8]) -> [u8; 32] {
 
 #[cfg(test)]
 mod tests {
-
     use super::*;
 
     #[test]
@@ -570,7 +571,7 @@ mod tests {
 
     #[test]
     fn test_encrypt_decrypt() {
-        let secret = b"This is a very very secret key!!"; // ensure it's of appropriate length
+        let secret = crate::TEST_SECRET; // ensure it's of appropriate length
         assert_eq!(secret.len(), SECRET_LENGTH);
         let data = b"Hello, world!";
         let nonce = ChaCha20Poly1305::generate_nonce(&mut OsRng);

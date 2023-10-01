@@ -199,9 +199,11 @@ async fn handle_client_communication<T: HandshakeStream>(
 mod tests {
     use super::*;
     use common::mock::ClientMockStream;
-
+    
     #[cfg(test)]
     async fn connect_to_server() -> Result<ClientMockStream, HandshakeError> {
+
+
         let proxy_addr: SocketAddr = PROXY_ADDR.parse().expect("Invalid proxy address");
         let server_addr: SocketAddr = SERVER_ADDR.parse().expect("Invalid server address");
         let target = TargetAddr::Ip(server_addr);
@@ -273,4 +275,5 @@ mod tests {
         // Further assertions can be made based on expected states or behaviors,
         // such as checking if the correct shared secret was generated.
     }
+
 }
