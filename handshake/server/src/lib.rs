@@ -1,6 +1,7 @@
-#![allow(unused_variables)]
-#![allow(unused_imports)]
-#![allow(unused_mut)]
+/// This code works but is intentionally left in an earlier development stage
+/// to show the evolution of the code.
+/// It is functional, but is missing production modifications like full error handling
+/// abstractions for testing and refactoring.
 use common::errors::HandshakeError;
 use common::noise::{
     decode_shared_secret, diffie_hellman, generate_keypair, mix_keys, EncryptedTcpStream,
@@ -10,7 +11,7 @@ use std::ffi::{CStr, CString};
 use std::os::raw::c_char;
 use std::sync::{Arc, Mutex};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::net::{TcpListener, TcpStream};
+use tokio::net::TcpListener;
 use tokio::sync::oneshot;
 
 #[repr(C)]
@@ -146,6 +147,10 @@ b014416087025d9e34862cedb87468f2a2e2b6cd99d288107f87a0641328b351
     Ok("Listener runtime sucessfully started".into())
 }
 
+/// Shuts down the active server instance.
+///
+/// This function sends a shutdown signal to the server task, waits for it to
+/// finish its operations, and releases its resources.
 #[no_mangle]
 pub extern "C" fn close_server() {
     let mut server_state = SERVER_STATE.lock().unwrap();
@@ -161,32 +166,3 @@ pub extern "C" fn close_server() {
         }
     }
 }
-
-// /// Hyper-basic stream transport receiver. 16-bit BE size followed by payload.
-// async fn recv(stream: &mut TcpStream) -> Result<Vec<u8>, HandshakeError> {
-//     let mut msg_len_buf = [0u8; 2];
-//     stream
-//         .read_exact(&mut msg_len_buf)
-//         .await
-//         .map_err(|e| Box::new(e) as HandshakeError)?;
-//     let msg_len = ((msg_len_buf[0] as usize) << 8) + (msg_len_buf[1] as usize);
-//     let mut msg = vec![0u8; msg_len];
-//     stream
-//         .read_exact(&mut msg[..])
-//         .await
-//         .map_err(|e| Box::new(e) as HandshakeError)?;
-//     Ok(msg)
-// }
-
-// /// Hyper-basic stream transport sender. 16-bit BE size followed by payload.
-// async fn send(stream: &mut TcpStream, buf: &[u8]) -> Result<(), HandshakeError> {
-//     let msg_len_buf = [(buf.len() >> 8) as u8, (buf.len() & 0xff) as u8];
-//     stream
-//         .write_all(&msg_len_buf)
-//         .await
-//         .map_err(|e| Box::new(e) as HandshakeError)?;
-//     stream
-//         .write_all(buf)
-//         .await
-//         .map_err(|e| Box::new(e) as HandshakeError)
-// }

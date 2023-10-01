@@ -6,6 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+async-trait = "0.1.73"
 tokio-socks = { git = "https://github.com/jmfrank63/tokio-socks.git", branch = "implement-asrawfd" }
 tokio = { version = "1.13.0", features = ["full"] }
 rand = "0.8.5"
