@@ -149,6 +149,7 @@ dependencies = [
  "hex",
  "rand",
  "tokio",
+ "tokio-socks",
 ]
 
 [[package]]

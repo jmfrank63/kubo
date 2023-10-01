@@ -1,7 +1,7 @@
 #![allow(unused_variables)]
 #![allow(unused_imports)]
 #![allow(unused_mut)]
-use common::errors::DynError;
+use common::errors::HandshakeError;
 use common::noise::{
     decode_shared_secret, diffie_hellman, generate_keypair, mix_keys, EncryptedTcpStream,
 };
@@ -22,14 +22,14 @@ pub struct FFIResult {
 struct ServerState {
     runtime: tokio::runtime::Runtime,
     shutdown_signal: Option<oneshot::Sender<()>>,
-    server_handle: Option<tokio::task::JoinHandle<Result<String, DynError>>>,
+    server_handle: Option<tokio::task::JoinHandle<Result<String, HandshakeError>>>,
 }
 
 lazy_static! {
     static ref SERVER_STATE: Mutex<Option<ServerState>> = Mutex::new(None);
 }
 
-fn convert_to_ffi_result(res: Result<String, DynError>) -> *mut FFIResult {
+fn convert_to_ffi_result(res: Result<String, HandshakeError>) -> *mut FFIResult {
     match res {
         Ok(data) => Box::into_raw(Box::new(FFIResult {
             data: CString::new(data).unwrap().into_raw(),
@@ -61,7 +61,7 @@ pub unsafe extern "C" fn start_server(peer_id: *const c_char) -> *mut FFIResult 
     convert_to_ffi_result(result)
 }
 
-fn start_rust_server(peer_id: &str) -> Result<String, DynError> {
+fn start_rust_server(peer_id: &str) -> Result<String, HandshakeError> {
     let pid = Arc::new(format!("Listener peer id: {}", peer_id));
     println!("Hello, I am {}", pid);
     let swarm_key = "/key/swarm/psk/1.0.0/
@@ -72,42 +72,31 @@ b014416087025d9e34862cedb87468f2a2e2b6cd99d288107f87a0641328b351
     let (shutdown_sender, mut shutdown_receiver) = oneshot::channel();
 
     // Create the tokio runtime
-    let rt = tokio::runtime::Runtime::new().map_err(|e| Box::new(e) as DynError)?;
+    let rt = tokio::runtime::Runtime::new()?;
 
     let mut buf = vec![0u8; 65535];
 
     let server_handle = Some(rt.spawn(async move {
         // Bind to listener address and port
-        let listener = TcpListener::bind("172.18.0.2:2000")
-            .await
-            .map_err(|e| Box::new(e) as DynError)?;
+        let listener = TcpListener::bind("172.18.0.2:2000").await?;
         println!("Listening on: {}", listener.local_addr().unwrap());
 
         // Await a connection and read the message
-        let (mut stream, addr) = listener
-            .accept()
-            .await
-            .map_err(|e| Box::new(e) as DynError)?;
+        let (mut stream, addr) = listener.accept().await?;
         println!("Got connection from: {:?}", addr);
 
         // Generate a new keypair
         let key_pair = generate_keypair()?;
         println!("Server generated keypair {:?}", key_pair);
         // <- e
-        let len = stream
-            .read_exact(&mut buf[..key_pair.public.len()])
-            .await
-            .map_err(|e| Box::new(e) as DynError)?;
+        let len = stream.read_exact(&mut buf[..key_pair.public.len()]).await?;
         println!("Server received something");
         let client_ephemeral = &buf[..len];
         println!("Server received {} bytes", len);
         println!("Server received {:?}", client_ephemeral);
 
         // -> e, ee
-        stream
-            .write_all(key_pair.public.as_ref())
-            .await
-            .map_err(|e| Box::new(e) as DynError)?;
+        stream.write_all(key_pair.public.as_ref()).await?;
         println!("Server sent ephemeral public key to client");
         let private_key = key_pair.private.as_slice();
         let ristretto_point = diffie_hellman(private_key, client_ephemeral)?;
@@ -127,7 +116,7 @@ b014416087025d9e34862cedb87468f2a2e2b6cd99d288107f87a0641328b351
             if let Ok(_) | Err(oneshot::error::TryRecvError::Closed) = shutdown_receiver.try_recv()
             {
                 println!("Received shutdown signal");
-                return Ok::<_, DynError>("Server shutting down".into());
+                return Ok::<_, HandshakeError>("Server shutting down".into());
             }
             // Clone the arc to pass it to the spawned task
             let pid = Arc::clone(&pid);
@@ -140,7 +129,7 @@ b014416087025d9e34862cedb87468f2a2e2b6cd99d288107f87a0641328b351
             encrypted_stream.send(pid.as_bytes()).await?;
             println!("Server answered with its peer id : {}", pid);
 
-            println!("Server sleeping for 100 milliseconds");
+            println!("Server sleeping for 1000 milliseconds");
             tokio::time::sleep(tokio::time::Duration::from_millis(1000)).await;
         }
     }));
@@ -174,30 +163,30 @@ pub extern "C" fn close_server() {
 }
 
 // /// Hyper-basic stream transport receiver. 16-bit BE size followed by payload.
-// async fn recv(stream: &mut TcpStream) -> Result<Vec<u8>, DynError> {
+// async fn recv(stream: &mut TcpStream) -> Result<Vec<u8>, HandshakeError> {
 //     let mut msg_len_buf = [0u8; 2];
 //     stream
 //         .read_exact(&mut msg_len_buf)
 //         .await
-//         .map_err(|e| Box::new(e) as DynError)?;
+//         .map_err(|e| Box::new(e) as HandshakeError)?;
 //     let msg_len = ((msg_len_buf[0] as usize) << 8) + (msg_len_buf[1] as usize);
 //     let mut msg = vec![0u8; msg_len];
 //     stream
 //         .read_exact(&mut msg[..])
 //         .await
-//         .map_err(|e| Box::new(e) as DynError)?;
+//         .map_err(|e| Box::new(e) as HandshakeError)?;
 //     Ok(msg)
 // }
 
 // /// Hyper-basic stream transport sender. 16-bit BE size followed by payload.
-// async fn send(stream: &mut TcpStream, buf: &[u8]) -> Result<(), DynError> {
+// async fn send(stream: &mut TcpStream, buf: &[u8]) -> Result<(), HandshakeError> {
 //     let msg_len_buf = [(buf.len() >> 8) as u8, (buf.len() & 0xff) as u8];
 //     stream
 //         .write_all(&msg_len_buf)
 //         .await
-//         .map_err(|e| Box::new(e) as DynError)?;
+//         .map_err(|e| Box::new(e) as HandshakeError)?;
 //     stream
 //         .write_all(buf)
 //         .await
-//         .map_err(|e| Box::new(e) as DynError)
+//         .map_err(|e| Box::new(e) as HandshakeError)
 // }
