@@ -22,6 +22,10 @@ https://github.com/casey/just
 
 Run `just demo`.
 
+### Where to find the code
+
+The rust code is under `handshake/`. Additionally there is code under `plugin/plugins/client` and `plugin/plugins/server`. The code under `plugin/plugins` is the code that is preloaded into the kubo client. The code under `handshake` is the code that is called by the plugin.
+
 ### What it does and how it works
 
 After the project is build you should be able to access the two kubo (go-ipfs) clients
