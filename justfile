@@ -78,3 +78,5 @@ renew-all: remove-all
     just --justfile handshake/nodes/justfile create-all-networks
     just --justfile handshake/nodes/bridge/justfile start-bridge
     just --justfile handshake/nodes/justfile run-all-nodes
+
+handshake: renew-all
