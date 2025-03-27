@@ -1,12 +1,6 @@
 # Handshake Demo with Rust and Go
 
-Dear Eiger team,
-
-This was a lot of work, but it was worth it. In fact it was super fun! I learned a lot about Rust and Go, and I'm glad I got to work on this project. I hope you enjoy reading this as much as I enjoyed writing it!
-First time technologies: Go, IPFS, FFI, Noise Protocol, Mocking.
-
-How was my time spent? 7 days for setting up the environment, 2 days I spent travelling. Effectively after 9 days I had two clients capable of reaching each other over a socks proxy. The devops stuff takes always more time than you want to spent on it.
-2 days were spent for the handshake using the `snow` low level library. But since the requirement was to implement something on my own, I replaced it with my own code. It was however a good guidance. The replacement took me 1 day. The last two days were spent on writing some basic tests and mocking. The code should work on Linux and MacOS, I have tested it on both. I have not tested it on Windows, but since everything is setup in docker containers, there is a good chance it might work, or at least with minimal changes.
+This project demonstrates a handshake protocol implemented using Rust and Go, leveraging technologies such as IPFS, FFI, and the Noise Protocol. It showcases encrypted communication between two IPFS clients running in isolated Docker containers, connected via a SOCKS proxy. The project also includes mock streams for testing and explores integration challenges with plugins and FFI.
 
 ## Installation:
 
