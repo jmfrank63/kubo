@@ -14,7 +14,7 @@ Install `just`.
 
 https://github.com/casey/just
 
-Run `just demo`.
+Run `just handshake`.
 
 ### Where to find the code
 
